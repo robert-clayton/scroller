@@ -15,12 +15,12 @@ $(INSTALL_STAMP): pyproject.toml poetry.lock
 	touch $(INSTALL_STAMP)
 
 .PHONY: generate
-generate:
+generate: $(INSTALL_STAMP)
 	@if [ -z $(POETRY) ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
 	./bin/generate_qrc.sh
 
 .PHONY: run
-run: generate
+run: $(INSTALL_STAMP) generate
 	@if [ -z $(POETRY) ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
 	$(POETRY) run $(NAME)
 
