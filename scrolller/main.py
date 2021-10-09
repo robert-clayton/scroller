@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import sys
 import ctypes
 from PySide6.QtWidgets import QApplication
@@ -8,7 +8,7 @@ from PySide6.QtGui import QIcon
 from . import qml_rc
 
 try:
-    with open(os.path.join(os.path.pardir(__file__), 'VERSION')) as f:
+    with open(Path(__file__).parent.parent / 'VERSION') as f:
         version = f.read().strip()
 except FileNotFoundError:
     version = '0.0.0'
@@ -40,6 +40,6 @@ def main():
 
     engine.load(':/gui.qml')
 
-    if not engine.rootObjects():
-        sys.exit(-1)
-    sys.exit(app.exec_())
+    # if not engine.rootObjects():
+    #     sys.exit(-1)
+    # sys.exit(app.exec_())

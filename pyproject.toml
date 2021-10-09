@@ -5,6 +5,9 @@ description = ""
 authors = ["robert-clayton <41345902+robert-clayton@users.noreply.github.com>"]
 license = "MIT"
 
+[tool.poetry.scripts]
+scrolller = "scrolller.main:main"
+
 [tool.poetry.dependencies]
 python = ">=3.9,<3.10"
 PySide6 = "\b"

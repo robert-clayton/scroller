@@ -1,2 +1,2 @@
-#!/bin/bash
-pyside6-rcc res/qml.qrc -o src/qml_rc.py
+#!/usr/bin/env bash
+pyside6-rcc res/qml.qrc -o scrolller/qml_rc.py

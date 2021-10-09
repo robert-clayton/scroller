@@ -6,15 +6,7 @@ POETRY := $(shell command -v poetry 2> /dev/null)
 
 .PHONY: help
 help:
-	@echo "Please use 'make <target>' where <target> is one of"
-	@echo ""
-	@echo "  install     install packages and prepare environment"
-	@echo "  clean       remove all temporary files"
-	@echo "  lint        run the code linters"
-	@echo "  format      reformat code"
-	@echo "  test        run all the tests"
-	@echo ""
-	@echo "Check the Makefile to know exactly what each target is doing."
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "\033[36m%-10s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
 install: $(INSTALL_STAMP)
 $(INSTALL_STAMP): pyproject.toml poetry.lock
@@ -22,13 +14,23 @@ $(INSTALL_STAMP): pyproject.toml poetry.lock
 	$(POETRY) install
 	touch $(INSTALL_STAMP)
 
+.PHONY: generate
+generate:
+	@if [ -z $(POETRY) ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
+	./bin/generate_qrc.sh
+
+.PHONY: run
+run: generate
+	@if [ -z $(POETRY) ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
+	$(POETRY) run $(NAME)
+
 .PHONY: clean
-clean:
+clean: ## Cleanup all artifacts
 	find . -type d -name "__pycache__" | xargs rm -rf {};
 	rm -rf $(INSTALL_STAMP) .coverage .mypy_cache
 
 .PHONY: lint
-lint: $(INSTALL_STAMP)
+lint: $(INSTALL_STAMP) ## Lint all python files
 	$(POETRY) run isort --profile=black --lines-after-imports=2 --check-only ./tests/ $(NAME)
 	$(POETRY) run black --check ./tests/ $(NAME) --diff
 	$(POETRY) run flake8 --ignore=W503,E501 ./tests/ $(NAME)
@@ -36,10 +38,10 @@ lint: $(INSTALL_STAMP)
 	$(POETRY) run bandit -r $(NAME) -s B608
 
 .PHONY: format
-format: $(INSTALL_STAMP)
+format: $(INSTALL_STAMP) ## Format all python files
 	$(POETRY) run isort --profile=black --lines-after-imports=2 ./tests/ $(NAME)
 	$(POETRY) run black ./tests/ $(NAME)
 
 .PHONY: test
-test: $(INSTALL_STAMP)
+test: $(INSTALL_STAMP) ## Run tests
 	$(POETRY) run pytest ./tests/ --cov-report term-missing --cov-fail-under 100 --cov $(NAME)
