@@ -1,0 +1,9 @@
+<RCC>
+  <qresource prefix="/">
+    <file alias='gui.qml'>../src/gui.qml</file>
+  </qresource>
+
+  <qresource prefix="/objects">
+
+  </qresource>
+</RCC>
