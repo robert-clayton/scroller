@@ -8,19 +8,20 @@ POETRY := $(shell command -v poetry 2> /dev/null)
 help:
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "\033[36m%-10s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
-install: $(INSTALL_STAMP)
+.PHONY: install
+install: $(INSTALL_STAMP) ## Installs project dependencies via poetry
 $(INSTALL_STAMP): pyproject.toml poetry.lock
 	@if [ -z $(POETRY) ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
 	$(POETRY) install
 	touch $(INSTALL_STAMP)
 
 .PHONY: generate
-generate: $(INSTALL_STAMP)
+generate: $(INSTALL_STAMP) ## Generates qrc file from .qml object files
 	@if [ -z $(POETRY) ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
 	./bin/generate_qrc.sh
 
 .PHONY: run
-run: $(INSTALL_STAMP) generate
+run: $(INSTALL_STAMP) generate ## Runs the application
 	@if [ -z $(POETRY) ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
 	$(POETRY) run $(NAME)
 
