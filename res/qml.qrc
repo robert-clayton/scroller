@@ -1,8 +1,4 @@
 <RCC>
-  <qresource prefix="/">
-    <file alias='gui.qml'>../scrolller/gui.qml</file>
-  </qresource>
-
   <qresource prefix="/objects">
 
   </qresource>
