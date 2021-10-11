@@ -5,7 +5,8 @@ import Qt.labs.platform 1.1
 import Qt.labs.settings 1.0
 import QtQml 2.15
 
-Window {
+ApplicationWindow {
+    id: window
     visible: true
     width: 640
     height: 480
@@ -21,51 +22,19 @@ Window {
         onActivated: folderDialog.open()
     }
 
-    ScrollView {
-        id: scroll
-        width: 200
-        height: 200
-        clip: true
-        property int tickTimerMS: 1000
-
-        ScrollBar.horizontal: ScrollBar { visible: false }
-        ScrollBar.vertical: ScrollBar {
-            id: scrollBar
-            parent: scroll
-            visible: false
-            stepSize: .01
-            NumberAnimation on position {
-                id: scrollAnimation
-                duration: scroll.tickTimerMS
-                easing.type: Easing.Linear
+    signal newImage(QUrl url)
+    onNewImage: {
+        const newImage = imageFactory.createObject(
+            window,
+            {
+                'url': url,
             }
-        }
-
-        ListView {
-            id: imagesView
-            boundsBehavior: Flickable.StopAtBounds
-            delegate: ItemDelegate {
-                    id: imageDelegate
-                    Image {
-                        id: image
-                        anchors.fill: parent
-                        source: modelData.source
-                    }
-                }
-        
-            onAtYEndChanged: {
-                if (atYEnd) {
-                }
-            }
-        }
+        )
     }
 
-    Timer {
-        id: tickTimer
-        running: true
-        repeat: true
-        interval: 500
-        onTriggered: scrollBar.increase()
+    Component {
+        id: imageFactory
+        ImageLoader {}
     }
 
     FolderDialog {
