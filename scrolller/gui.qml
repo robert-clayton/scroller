@@ -13,7 +13,7 @@ ApplicationWindow {
     color: "transparent"
     title: qsTr("scrolller")
 
-    property int colCount: 1
+    property int colCount: 3
     property int colWidth: width / colCount
 
     Component.onCompleted: {
@@ -33,45 +33,38 @@ ApplicationWindow {
                 id: view
                 Layout.fillHeight: true
                 width: colWidth
-                model: ImageModel
+                model: ImageModel.requestProxy()
                 highlightRangeMode: ListView.StrictlyEnforceRange
                 boundsBehavior: Flickable.StopAtBounds
-
-                // ScrollBar.vertical: ScrollBar {
-                //     id: scrollbar
-                //     visible: false
-                //     stepSize: .11
-                //     NumberAnimation on position {
-                //         id: scrollAnimation
-                //         duration: 1000
-                //         easing.type: Easing.Linear
-                //     }
-
-                //     Timer {
-                //         interval: 1000
-                //         running: true
-                //         repeat: true
-                //         onTriggered: scrollbar.position += scrollbar.stepSize
-                //     }
-                // }
-
+                interactive: false
                 
+                highlightMoveDuration: -1
+                highlightMoveVelocity: 70
 
                 delegate: Image {
                     source: model.url
                     width: window.colWidth
                     height: window.colWidth / model.ratio
+                    mipmap: true
                 }
 
                 onCurrentIndexChanged: {
                     if (model == null) return
+                    console.log(model.getProxyID() + ':' + view.currentIndex)
                     if (view.currentIndex > view.count - 10)
                         model.generateImages()
+                }
+
+                Timer {
+                    interval: 1000; running: true; repeat: true
+                    triggeredOnStart: true
+                    onTriggered: view.currentIndex += 1
                 }
 
             }
         }
     }
+    
 
     FolderDialog {
         id: folderDialog

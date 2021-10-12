@@ -6,7 +6,7 @@ import secrets
 import random
 from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlApplicationEngine
-from PySide6.QtCore import Qt, QSettings, QUrl, QObject, Signal, Slot, QStandardPaths, \
+from PySide6.QtCore import QSortFilterProxyModel, Qt, QSettings, QUrl, QObject, Signal, Slot, QStandardPaths, \
     QtInfoMsg, QtWarningMsg, QtCriticalMsg, QtFatalMsg,  QAbstractListModel, QModelIndex
 from PySide6.QtGui import QIcon
 from PIL import Image
@@ -34,9 +34,27 @@ def qt_message_handler(mode, context, message):
     print("%s: %s (%s:%d, %s)" % (mode, message, context.file, context.line, context.file))
 
 
+class ImageProxy(QSortFilterProxyModel):
+    def __init__(self, source, proxyID):
+        super().__init__()
+        self.setSourceModel(source)
+        self.proxyID = proxyID
+
+    def filterAcceptsRow(self, source_row, source_parent):
+        return self.sourceModel().index(source_row, 0, source_parent).data(ImageModel.proxyID) == self.proxyID
+    
+    @Slot()
+    def generateImages(self):
+        self.sourceModel().generateImages(proxyID=self.proxyID)
+    
+    @Slot(result=int)
+    def getProxyID(self):
+        return self.proxyID
+
+
 class ImageModel(QAbstractListModel):
     url = Qt.UserRole + 1
-    name = Qt.UserRole + 2
+    proxyID = Qt.UserRole + 2
     ratio = Qt.UserRole + 3
 
     def __init__(self, parent=None):
@@ -44,14 +62,15 @@ class ImageModel(QAbstractListModel):
         self.imageData = []
         self.imageList = []
         self.setFolder(self.getFolder())
+        self.proxies = []
 
     def data(self, index, role=Qt.DisplayRole):
         row = index.row()
         if index.isValid() and 0 <= row < self.rowCount():
             if role == ImageModel.url:
                 return self.imageData[row]["url"]
-            elif role == ImageModel.name:
-                return self.imageData[row]["name"]
+            elif role == ImageModel.proxyID:
+                return self.imageData[row]["proxyID"]
             elif role == ImageModel.ratio:
                 return self.imageData[row]["ratio"]
 
@@ -61,7 +80,7 @@ class ImageModel(QAbstractListModel):
     def roleNames(self):
         return {
             ImageModel.url: b'url',
-            ImageModel.name: b'name',
+            ImageModel.proxyID: b'proxyID',
             ImageModel.ratio: b'ratio'
         }
 
@@ -86,7 +105,7 @@ class ImageModel(QAbstractListModel):
     def getFolder(self):
         return QUrl.fromLocalFile(QSettings().value('folder', QStandardPaths.standardLocations(QStandardPaths.PicturesLocation)[0]))
 
-    def generateImageData(self, count: int):
+    def generateImageData(self, count: int, proxyID: int):
         if count > len(self.toGenerateList):
             random.shuffle(self.imageList)
             self.toGenerateList = self.imageList
@@ -98,22 +117,24 @@ class ImageModel(QAbstractListModel):
                     ratio = img.size[0] / img.size[1]
             except PermissionError: # file is not readable
                 continue
-            data.append({ "url": QUrl.fromLocalFile(path), "ratio": ratio })
+            data.append({ "url": QUrl.fromLocalFile(path), "ratio": ratio , "proxyID": proxyID })
         return data
 
     @Slot(result=bool)
     @Slot(int, result=bool)
-    def generateImages(self, count: int = 5):
+    @Slot(int, int, result=bool)
+    def generateImages(self, count: int = 15, proxyID: int = 0):
+        print("Generating images...")
+        print(f"\tProxy ID: {proxyID}")
         self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount() + count - 1)
-        self.imageData.extend(self.generateImageData(count))
+        self.imageData.extend(self.generateImageData(count, proxyID))
         self.endInsertRows()
         return True
 
-class Backend(QObject):
-    exampleSignal = Signal()
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    @Slot(result=QAbstractListModel)
+    def requestProxy(self):
+        self.proxies.append(ImageProxy(self, len(self.proxies)))
+        return self.proxies[-1]
 
 
 def main():
@@ -127,10 +148,8 @@ def main():
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     app.setApplicationVersion(version)
 
-    backend = Backend()
     images = ImageModel()
     engine = QQmlApplicationEngine()
-    engine.rootContext().setContextProperty("Backend", backend)
     engine.rootContext().setContextProperty("ImageModel", images)
     gui = os.fspath(Path(__file__).resolve().parent / 'gui.qml')
     engine.load(QUrl.fromLocalFile(gui))
