@@ -18,6 +18,7 @@ ApplicationWindow {
 
     Component.onCompleted: {
         folderDialog.folder = ImageModel.getFolder()
+        ImageModel.startup()
     }
 
     Shortcut {
@@ -48,19 +49,27 @@ ApplicationWindow {
                     mipmap: true
                 }
 
-                onCurrentIndexChanged: {
+                // onCurrentIndexChanged: {
+                //     if (model == null) return
+                //     console.log(model.getProxyID() + ':' + view.currentIndex)
+                //     if (view.currentIndex > view.count - 5)
+                //         model.generateImages()
+                // }
+
+                onAtYEndChanged: {
                     if (model == null) return
-                    console.log(model.getProxyID() + ':' + view.currentIndex)
-                    if (view.currentIndex > view.count - 10)
+                    if (view.atYEnd) {
+                        console.log(model.getProxyID() + ': atYEnd')
                         model.generateImages()
+                        timer.start()
+                    }
                 }
 
                 Timer {
-                    interval: 1000; running: true; repeat: true
-                    triggeredOnStart: true
-                    onTriggered: view.currentIndex += 1
+                    id: timer
+                    interval: 1000;
+                    onTriggered: view.currentIndex = view.count - 1
                 }
-
             }
         }
     }
@@ -68,7 +77,9 @@ ApplicationWindow {
 
     FolderDialog {
         id: folderDialog
-        onAccepted: ImageModel.setFolder(folderDialog.folder)
+        onAccepted: {
+            ImageModel.setFolder(folderDialog.folder)
+        }
     }
 }
 
