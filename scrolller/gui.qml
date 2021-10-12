@@ -8,13 +8,13 @@ import QtQml 2.15
 ApplicationWindow {
     id: window
     visible: true
-    width: 640
-    height: 480
+    width: 1600
+    height: 900
+    color: "transparent"
     title: qsTr("scrolller")
 
     Component.onCompleted: {
-        folderDialog.folder = Backend.getFolder()
-        imagesView.model = Backend.images
+        folderDialog.folder = ImageModel.getFolder()
     }
 
     Shortcut {
@@ -22,23 +22,32 @@ ApplicationWindow {
         onActivated: folderDialog.open()
     }
 
-    signal newImage(QUrl url)
-    onNewImage: {
-        const newImage = imageFactory.createObject(
-            window,
-            {
-                'url': url,
-            }
-        )
-    }
+    ListView{
+        id: view
+        property int colWidth: window.width / 3
+        anchors.fill: parent
+        model: ImageModel
+        highlightRangeMode: ListView.StrictlyEnforceRange
 
-    Component {
-        id: imageFactory
-        ImageLoader {}
+        delegate: Image {
+            source: model.url
+            width: view.colWidth
+            height: view.colWidth / model.ratio
+        }
+
+        
+        onCurrentIndexChanged: {
+            if (view.currentIndex == view.count - 1) {
+                console.debug('Scrolled to bottom ' + count)
+                ImageModel.generateImages()
+            }
+            console.debug('Current index changed ' + view.currentIndex)
+        }
     }
 
     FolderDialog {
         id: folderDialog
-        onAccepted: Backend.setFolder(folderDialog.folder)
+        onAccepted: ImageModel.setFolder(folderDialog.folder)
     }
 }
+

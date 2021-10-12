@@ -11,6 +11,7 @@ scrolller = "scrolller.main:main"
 [tool.poetry.dependencies]
 python = ">=3.9,<3.10"
 PySide6 = "\b"
+Pillow = "^8.3.2"
 
 [tool.poetry.dev-dependencies]
 isort = "^5.9.3"

@@ -21,7 +21,7 @@ generate: $(INSTALL_STAMP) ## Generates qrc file from .qml object files
 	./bin/generate_qrc.sh
 
 .PHONY: run
-run: $(INSTALL_STAMP) generate ## Runs the application
+run: $(INSTALL_STAMP) ## Runs the application
 	@if [ -z $(POETRY) ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
 	$(POETRY) run $(NAME)
 
