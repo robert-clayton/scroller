@@ -103,8 +103,8 @@ class ImageModel(QAbstractListModel):
 
     @Slot(result=bool)
     @Slot(int, result=bool)
-    def generateImages(self, count: int = 50):
-        self.beginInsertRows(QModelIndex(), self.rowCount() - 1, self.rowCount() + count - 1)
+    def generateImages(self, count: int = 5):
+        self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount() + count - 1)
         self.imageData.extend(self.generateImageData(count))
         self.endInsertRows()
         return True

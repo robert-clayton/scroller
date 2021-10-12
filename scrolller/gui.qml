@@ -13,6 +13,9 @@ ApplicationWindow {
     color: "transparent"
     title: qsTr("scrolller")
 
+    property int colCount: 1
+    property int colWidth: width / colCount
+
     Component.onCompleted: {
         folderDialog.folder = ImageModel.getFolder()
     }
@@ -22,26 +25,51 @@ ApplicationWindow {
         onActivated: folderDialog.open()
     }
 
-    ListView{
-        id: view
-        property int colWidth: window.width / 3
+    RowLayout {
         anchors.fill: parent
-        model: ImageModel
-        highlightRangeMode: ListView.StrictlyEnforceRange
+        Repeater {
+            model: window.colCount
+            ListView {
+                id: view
+                Layout.fillHeight: true
+                width: colWidth
+                model: ImageModel
+                highlightRangeMode: ListView.StrictlyEnforceRange
+                boundsBehavior: Flickable.StopAtBounds
 
-        delegate: Image {
-            source: model.url
-            width: view.colWidth
-            height: view.colWidth / model.ratio
-        }
+                // ScrollBar.vertical: ScrollBar {
+                //     id: scrollbar
+                //     visible: false
+                //     stepSize: .11
+                //     NumberAnimation on position {
+                //         id: scrollAnimation
+                //         duration: 1000
+                //         easing.type: Easing.Linear
+                //     }
 
-        
-        onCurrentIndexChanged: {
-            if (view.currentIndex == view.count - 1) {
-                console.debug('Scrolled to bottom ' + count)
-                ImageModel.generateImages()
+                //     Timer {
+                //         interval: 1000
+                //         running: true
+                //         repeat: true
+                //         onTriggered: scrollbar.position += scrollbar.stepSize
+                //     }
+                // }
+
+                
+
+                delegate: Image {
+                    source: model.url
+                    width: window.colWidth
+                    height: window.colWidth / model.ratio
+                }
+
+                onCurrentIndexChanged: {
+                    if (model == null) return
+                    if (view.currentIndex > view.count - 10)
+                        model.generateImages()
+                }
+
             }
-            console.debug('Current index changed ' + view.currentIndex)
         }
     }
 
