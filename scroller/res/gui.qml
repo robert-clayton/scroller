@@ -16,6 +16,7 @@ ApplicationWindow {
     flags: visibility == "FullScreen" ? (Qt.Window | Qt.FramelessWindowHint) : Qt.Window
     visibility: Backend ? Backend.visibility : "Windowed"
 
+    property bool paused: false
     property int colCount: Backend ? Backend.colCount : 1
     property int colWidth: width / colCount
     property int tickSpeed: Backend ? Backend.tickSpeed : 1
@@ -24,17 +25,6 @@ ApplicationWindow {
     Item {
         id: internal
         anchors.fill: parent
-
-        Component { id: delayCallerComponent; Timer {} }
-
-        function delayCall( interval, callback ) {
-            var delayCaller = delayCallerComponent.createObject( null, { "interval": interval } );
-            delayCaller.triggered.connect(() => {
-                callback();
-                delayCaller.destroy();
-            });
-            delayCaller.start();
-        }
 
         function addColumn(amt) {
             const previousWidth = window.colWidth
@@ -56,6 +46,10 @@ ApplicationWindow {
             Backend.setTickSpeed(window.tickSpeed + speed)
         }
 
+        function togglePause() {
+            window.paused = !window.paused
+        }
+
         FolderDialog { id: folderDialog }
         function changeFolder() {
             folderDialog.onAccepted.connect(() => {
@@ -70,6 +64,7 @@ ApplicationWindow {
         Shortcut { sequence: StandardKey.ZoomOut; onActivated: internal.addColumn(1) }
         Shortcut { sequence: StandardKey.ZoomIn; onActivated: internal.addColumn(-1) }
         Shortcut { sequence: "F11"; onActivated: Backend.toggleVisibility() }
+        Shortcut { sequence: "Space"; onActivated: internal.togglePause() }
 
         MouseArea { 
             anchors.fill: parent
@@ -97,12 +92,24 @@ ApplicationWindow {
                 model: ImageModel.requestProxy(index)
                 interactive: false
 
-                delegate: Image {
-                    source: model.url
-                    width: window.colWidth
-                    height: window.colWidth / model.ratio
-                    mipmap: true
-                    asynchronous: true
+                delegate: Component {
+                    // Loader {
+                    //     source: switch(model.type) {
+                    //         case "image":
+                    //             model.path
+                    //         case "video":
+                    //             model.thumbnail
+                    //         default:
+                                Image {
+                                    source: model.url
+                                    width: window.colWidth
+                                    height: window.colWidth / model.ratio
+                                    mipmap: true
+                                    asynchronous: true
+                                }
+                    //     }
+                    // }
+                    
                 }
 
                 onAtYEndChanged: {
@@ -110,25 +117,25 @@ ApplicationWindow {
                     if (view.atYEnd) model.generateImages()
                 }
                 Behavior on contentY { id: behaviorContentY; NumberAnimation{ duration: 100 } }
-                Timer { interval: 100; running: true; repeat: true; onTriggered: contentY += window.tickSpeed }
+                Timer { interval: 100; running: !window.paused; repeat: true; onTriggered: contentY += window.tickSpeed }
             }
         }
     }
 
-    ShaderEffectSource {
-        id: effectSource
+    // ShaderEffectSource {
+    //     id: effectSource
 
-        sourceItem: container
-        anchors.fill: container
-        sourceRect: Qt.rect(x,y, width, height)
-    }
+    //     sourceItem: container
+    //     anchors.fill: container
+    //     sourceRect: Qt.rect(x,y, width, height)
+    // }
 
-    FastBlur{
-        id: blur
-        anchors.fill: effectSource
+    // FastBlur{
+    //     id: blur
+    //     anchors.fill: effectSource
 
-        source: effectSource
-        radius: 10
-    }
+    //     source: effectSource
+    //     radius: 10
+    // }
 }
 

@@ -255,7 +255,7 @@ def main():
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("Backend", backend)
     engine.rootContext().setContextProperty("ImageModel", images)
-    engine.load("qrc:/gui.qml")
+    engine.load("qrc:/res/gui.qml")
 
     if not engine.rootObjects():
         sys.exit(-1)
