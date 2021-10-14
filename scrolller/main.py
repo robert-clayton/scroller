@@ -62,11 +62,16 @@ class ImageModel(QAbstractListModel):
         self.imageData = []
         self.imageList = []
         self.toGenerateList = []
-        self.proxies = []
+        self.proxies = {}
 
     @Slot()
-    def startup(self):
-        self.setFolder(self.getFolder())
+    @Slot(QUrl)
+    def startup(self, folder: QUrl = None):
+        print('Starting up')
+        if folder is None:
+            folder = self.getFolder()
+        self.setFolder(folder)
+        
 
     def data(self, index, role=Qt.DisplayRole):
         row = index.row()
@@ -93,17 +98,18 @@ class ImageModel(QAbstractListModel):
         if 0 <= row < self.rowCount():
             return self.imageData[row]
 
-    @Slot(QUrl, result=bool)
     def setFolder(self, folder: QUrl):
         folder = folder.toLocalFile()
         QSettings().setValue('folder', folder)
         self.beginRemoveRows(QModelIndex(), 0, self.rowCount() - 1)
         self.imageData = []
         self.endRemoveRows()
-        self.imageList = [os.path.join(folder, file) for folder, _, files in os.walk(folder) for file in files if file.endswith(('.jpg', '.png'))]
+        self.imageList = [os.path.join(folder, file) for file in os.listdir(folder) if file.endswith(('.jpg', '.png'))]
         random.shuffle(self.imageList)
         self.toGenerateList = self.imageList
-        for proxy in self.proxies:
+        print(f'There are {len(self.proxies)} proxies currently')
+        for proxy in self.proxies.values():
+            print(f'Generating images for: {proxy.getProxyID()}')
             self.generateImages(proxyID=proxy.getProxyID())
 
     @Slot(result=QUrl)
@@ -134,11 +140,14 @@ class ImageModel(QAbstractListModel):
         self.endInsertRows()
         return True
 
-    @Slot(result=QAbstractListModel)
-    def requestProxy(self):
-        self.proxies.append(ImageProxy(self, len(self.proxies)))
-        return self.proxies[-1]
-
+    @Slot(int, result=QAbstractListModel)
+    def requestProxy(self, proxyID: int):
+        self.proxies[proxyID] = ImageProxy(self, proxyID)
+        return self.proxies[proxyID]
+    
+    @Slot(int)
+    def removeProxy(self, proxyID: int):
+        self.proxies.pop(proxyID, None)
 
 def main():
     app = QApplication(sys.argv)
