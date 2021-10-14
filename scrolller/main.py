@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 import sys
 import ctypes
-import secrets
 import random
 from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlApplicationEngine
