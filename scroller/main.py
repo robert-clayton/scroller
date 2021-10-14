@@ -129,7 +129,7 @@ class ImageModel(QAbstractListModel):
         self.beginRemoveRows(QModelIndex(), 0, self.rowCount() - 1)
         self.imageData = []
         self.endRemoveRows()
-        self.imageList = [os.path.join(folder, file) for file in os.listdir(folder)]
+        self.imageList = [os.path.join(folder, file) for file in os.listdir(folder) if file.endswith((".jpg", ".jpeg", ".png", ".gif"))]
         random.shuffle(self.imageList)
         self.toGenerateList = self.imageList
         for proxy in self.proxies.values():
