@@ -189,6 +189,7 @@ class Backend(QObject):
         self._visibility = QSettings().value("visibility", "Windowed")
         self._tickSpeed = QSettings().value("tickSpeed", 10)
         self._colCount = QSettings().value("colCount", 3)
+        self.colPositions = {}
 
     def setVisibility(self, visibility: str):
         self._visibility = visibility
@@ -209,9 +210,20 @@ class Backend(QObject):
 
     @Slot(int)
     def setColCount(self, colCount: int):
+        for idx in range(colCount):
+            if idx > self._colCount:
+                self.colPositions.pop(idx) # remove unused cols
         self._colCount = colCount
         QSettings().setValue("colCount", colCount)
         self.colCountChanged.emit(colCount)
+
+    @Slot(int, int)
+    def setColPosition(self, col: int, position: int):
+        self.colPositions[col] = position
+
+    @Slot(int, result=int)
+    def getColPosition(self, col: int):
+        return self.colPositions.get(col, 0)
 
     visibilityChanged = Signal(str)
     tickSpeedChanged = Signal(int)

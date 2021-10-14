@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.11
 import Qt.labs.platform 1.1
 import Qt.labs.settings 1.0
 import QtQml 2.15
+import Qt5Compat.GraphicalEffects
 
 ApplicationWindow {
     id: window
@@ -24,10 +25,31 @@ ApplicationWindow {
         id: internal
         anchors.fill: parent
 
+        Component { id: delayCallerComponent; Timer {} }
+
+        function delayCall( interval, callback ) {
+            var delayCaller = delayCallerComponent.createObject( null, { "interval": interval } );
+            delayCaller.triggered.connect(() => {
+                callback();
+                delayCaller.destroy();
+            });
+            delayCaller.start();
+        }
+
         function addColumn(amt) {
-            if (window.colCount + amt < 1) return
-            if (amt < 0) ImageModel.removeProxy(window.colCount - 1)
+            const previousWidth = window.colWidth
+            if (window.colCount + amt < 1)
+                return
+            for (var i = 0; i < repeater.count; i++)
+                Backend.setColPosition(i, repeater.itemAt(i).contentY)
+            if (amt < 0)
+                ImageModel.removeProxy(window.colCount - 1)
             Backend.setColCount(window.colCount + amt)
+            for (var i = 0; i < repeater.count; i++) {
+                const colPosition = Backend.getColPosition(i)
+                const deltaWidth = window.colWidth / previousWidth
+                repeater.itemAt(i).contentY = colPosition * deltaWidth
+            }
         }
 
         function addTickSpeed(speed) {
@@ -63,6 +85,7 @@ ApplicationWindow {
 
     RowLayout {
         anchors.fill: parent
+        id: container
         Repeater {
             id: repeater
             model: window.colCount
@@ -86,11 +109,26 @@ ApplicationWindow {
                     if (model == null) return
                     if (view.atYEnd) model.generateImages()
                 }
-
-                Behavior on contentY { NumberAnimation{ duration: 100 } }
+                Behavior on contentY { id: behaviorContentY; NumberAnimation{ duration: 100 } }
                 Timer { interval: 100; running: true; repeat: true; onTriggered: contentY += window.tickSpeed }
             }
         }
+    }
+
+    ShaderEffectSource {
+        id: effectSource
+
+        sourceItem: container
+        anchors.fill: container
+        sourceRect: Qt.rect(x,y, width, height)
+    }
+
+    FastBlur{
+        id: blur
+        anchors.fill: effectSource
+
+        source: effectSource
+        radius: 10
     }
 }
 
