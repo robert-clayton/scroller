@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: make build
-      - run: echo "${{ needa.meta.outputs.version }}" > dist/scroller/VERSION
+      - run: echo "${{ needs.meta.outputs.version }}" > dist/scroller/VERSION
 
       - name: Create Release
         uses: actions/create-release@master
