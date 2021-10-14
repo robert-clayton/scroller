@@ -10,61 +10,37 @@ defaults:
     shell: bash
 
 jobs:
-  meta:
+  Release:
     name: Metadata
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.releaseCheck.outputs.version || steps.buildVersion.outputs.version }}
-      is-release: ${{ steps.releaseCheck.outputs.is-release }}
-      notes: ${{ steps.releaseCheck.outputs.notes }}
+    runs-on: windows-10
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
       
-      - name: Check Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        id: releaseCheck
+      - name: Release Notes
+        id: notes
         run: |
-          TAG="${${{ github.ref }}#'refs/tags/v'}"
-          echo "::set-output name=version::$TAG"
-          echo "::set-output name=is-release::true"
-          sed -i 's/<version>/$TAG/g' RELEASE.md
           RELEASE=$(cat RELEASE.md)
           RELEASE="${RELEASE//'%'/'%25'}"
           RELEASE="${RELEASE//$'\n'/'%0A'}"
           RELEASE="${RELEASE//$'\r'/'%0D'}"
           echo "::set-output name=notes::$RELEASE"
 
-      - name: Get Version
-        if: "!startsWith(github.ref, 'refs/tags/v')"
-        id: buildVersion
-        uses: paulhatch/semantic-version@v4.0.2
-        with:
-          format: 'v${major}.${minor}.${patch}-dev${increment}'
-  
-  build:
-    name: Build Release
-    if: needs.meta.outputs.is-release=='true'
-    runs-on: windows-10
-    needs: [meta]
-    env:
-      artifact-name: scroller-${{ needs.meta.outputs.version }}.zip
-    steps:
       - uses: actions/checkout@v2
       - run: make build
-      - run: echo "${{ needs.meta.outputs.version }}" > dist/scroller/VERSION
+      - run: echo $TAG > dist/scroller/VERSION
 
       - name: Create Release
         uses: actions/create-release@master
-        id: createRelease
+        id: release
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          tag_name: ${{ needs.meta.outputs.version }}
-          release_name: ${{ needs.meta.outputs.version }}
+          tag_name: $TAG
+          release_name: $TAG
           body: |
-            ${{ needs.meta.outputs.notes }}
+            ${{ steps.notes.outputs.notes }}
           prerelease: false
 
       - name: Upload Release Asset
@@ -72,7 +48,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          upload_url: ${{ steps.createRelease.outputs.upload_url }}
-          asset_path: ./${{ env.artifact-name }}
-          asset_name: ${{ env.artifact-name }}
+          upload_url: ${{ steps.release.outputs.upload_url }}
+          asset_path: ./scroller-$TAG.zip
+          asset_name: scroller-$TAG.zip
           asset_content_type: application/octet-stream
