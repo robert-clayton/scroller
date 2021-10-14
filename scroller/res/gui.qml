@@ -38,6 +38,7 @@ ApplicationWindow {
             property alias width: window.width
             property alias height: window.height
             property alias visibility: window.visibility
+            property alias flags: window.flags
             property int desktopAvailableWidth
             property int desktopAvailableHeight
             property int tickSpeed: 10
@@ -108,7 +109,7 @@ ApplicationWindow {
         Shortcut { sequence: "Esc"; onActivated: internal.openMenu(true) }
         Shortcut { sequence: StandardKey.ZoomOut; onActivated: internal.addColumn(1) }
         Shortcut { sequence: StandardKey.ZoomIn; onActivated: internal.addColumn(-1) }
-        Shortcut { sequence: "F10"; onActivated: () => { window.flags = window.flags | Qt.FramelessWindowHint} }
+        Shortcut { sequence: "F10"; onActivated: () => { settings.flags ^= Qt.FramelessWindowHint} }
         Shortcut { sequence: "F11"; onActivated: internal.toggleVisibility() }
         Shortcut { sequence: "Space"; onActivated: () => { window.paused = !window.paused } }
 
