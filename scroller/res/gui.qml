@@ -11,45 +11,66 @@ import 'qrc:/delegates'
 ApplicationWindow {
     id: window
     visible: true
-    width: 1600
-    height: 900
-    color: "transparent"
-    title: qsTr("scroller")
+    color: "black"
     flags: visibility == "FullScreen" ? (Qt.Window | Qt.FramelessWindowHint) : Qt.Window
-    visibility: Backend ? Backend.visibility : "Windowed"
 
     property bool paused: false
-    property int colCount: Backend ? Backend.colCount : 1
-    property int colWidth: width / colCount
-    property int tickSpeed: Backend ? Backend.tickSpeed : 1
-    
+    property int colWidth: width / settings.colCount
+
+    Component.onCompleted: {
+        internal.ensureValidWindowPosition()
+        title = qsTr("Scroller") + "      " + ImageModel.getFolder(true)
+    }
+    Component.onDestruction: internal.saveScreenLayout()
 
     Item {
         id: internal
         anchors.fill: parent
 
+        property var colPositions: {'0': 0}
+
+        Settings {
+            id: settings
+            property alias x: window.x
+            property alias y: window.y
+            property alias width: window.width
+            property alias height: window.height
+            property alias visibility: window.visibility
+            property var desktopAvailableWidth
+            property var desktopAvailableHeight
+            property var tickSpeed: 10
+            property var colCount: 5
+        }
+
+        function saveScreenLayout() {
+            settings.desktopAvailableWidth = Screen.desktopAvailableWidth
+            settings.desktopAvailableHeight = Screen.desktopAvailableHeight
+        }
+
+        function ensureValidWindowPosition() {
+            var savedScreenLayout = (settings.desktopAvailableWidth === Screen.desktopAvailableWidth)
+                    && (settings.desktopAvailableHeight === Screen.desktopAvailableHeight)
+            window.x = (savedScreenLayout) ? settings.x : Screen.width / 2 - window.width / 2
+            window.y = (savedScreenLayout) ? settings.y : Screen.height / 2 - window.height / 2
+        }
+
         function addColumn(amt) {
             const previousWidth = window.colWidth
-            if (window.colCount + amt < 1)
+            if (settings.colCount + amt < 1)
                 return
             for (var i = 0; i < repeater.count; i++)
-                Backend.setColPosition(i, repeater.itemAt(i).contentY)
+                colPositions[i] = repeater.itemAt(i).contentY
             if (amt < 0)
-                ImageModel.removeProxy(window.colCount - 1)
-            Backend.setColCount(window.colCount + amt)
+                ImageModel.removeProxy(settings.colCount - 1)
+            settings.colCount += amt
             for (var i = 0; i < repeater.count; i++) {
-                const colPosition = Backend.getColPosition(i)
                 const deltaWidth = window.colWidth / previousWidth
-                repeater.itemAt(i).contentY = colPosition * deltaWidth
+                repeater.itemAt(i).contentY = colPositions[i] * deltaWidth
             }
-        }
-
-        function addTickSpeed(speed) {
-            Backend.setTickSpeed(window.tickSpeed + speed)
-        }
-
-        function togglePause() {
-            window.paused = !window.paused
+            if (amt < 0)
+                for (var i = 0; i < Object.keys(settings.colCount).length; i++)
+                    if (i > settings.colCount)
+                        delete colPositions[i]
         }
 
         FolderDialog { id: folderDialog }
@@ -61,12 +82,19 @@ ApplicationWindow {
             folderDialog.open()
         }
 
+        function openMenu(openingMenu) {
+            if (openingMenu)
+                menu.open()
+            window.paused = openingMenu
+            blur.visible = openingMenu
+        }
+
         Shortcut { sequence: StandardKey.Open; onActivated: internal.changeFolder() }
-        Shortcut { sequence: "Esc"; onActivated: close() }
+        Shortcut { sequence: "Esc"; onActivated: internal.openMenu(true) }
         Shortcut { sequence: StandardKey.ZoomOut; onActivated: internal.addColumn(1) }
         Shortcut { sequence: StandardKey.ZoomIn; onActivated: internal.addColumn(-1) }
         Shortcut { sequence: "F11"; onActivated: Backend.toggleVisibility() }
-        Shortcut { sequence: "Space"; onActivated: internal.togglePause() }
+        Shortcut { sequence: "Space"; onActivated: () => { window.paused = !window.paused } }
 
         MouseArea { 
             anchors.fill: parent
@@ -74,7 +102,7 @@ ApplicationWindow {
                 if (wheel.modifiers & Qt.ControlModifier) {
                     internal.addColumn(wheel.angleDelta.y > 0 ? -1 : 1)
                 } else {
-                    internal.addTickSpeed(wheel.angleDelta.y > 0 ? 1 : -1)
+                    settings.tickSpeed += wheel.angleDelta.y > 0 ? 1 : -1
                 }
             }
         }
@@ -85,7 +113,7 @@ ApplicationWindow {
         id: container
         Repeater {
             id: repeater
-            model: window.colCount
+            model: settings.colCount
             Component.onCompleted: ImageModel.startup()
             ListView {
                 id: view
@@ -104,33 +132,45 @@ ApplicationWindow {
                                     return "delegates/ListDelegateImage.qml"
                             }
                         }
-                        
                     }
 
                 onAtYEndChanged: {
-                    if (model == null) return
-                    if (view.atYEnd) model.generateImages()
+                    if (model == null)
+                        return
+                    if (view.atYEnd)
+                        model.generateImages()
                 }
                 Behavior on contentY { id: behaviorContentY; NumberAnimation{ duration: 100 } }
-                Timer { interval: 100; running: !window.paused; repeat: true; onTriggered: contentY += window.tickSpeed }
+                Timer { interval: 100; running: !window.paused; repeat: true; onTriggered: contentY += settings.tickSpeed }
             }
         }
     }
 
-    // ShaderEffectSource {
-    //     id: effectSource
+    Popup {
+        id: menu
+        anchors.centerIn: parent
+        width: 300
+        height: 300
+        visible: false
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
 
-    //     sourceItem: container
-    //     anchors.fill: container
-    //     sourceRect: Qt.rect(x,y, width, height)
-    // }
+        onClosed: internal.openMenu(false)
+    }
 
-    // FastBlur{
-    //     id: blur
-    //     anchors.fill: effectSource
+    ShaderEffectSource {
+        id: effectSource
+        sourceItem: container
+        anchors.fill: container
+        sourceRect: Qt.rect(x,y, width, height)
+    }
 
-    //     source: effectSource
-    //     radius: 10
-    // }
+    FastBlur {
+        id: blur
+        anchors.fill: effectSource
+        source: effectSource
+        radius: 25
+        visible: false
+    }
 }
-

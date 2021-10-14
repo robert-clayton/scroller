@@ -136,13 +136,13 @@ class ImageModel(QAbstractListModel):
             self.generateImages(proxyID=proxy.getProxyID())
 
     @Slot(result=QUrl)
-    def getFolder(self):
-        return QUrl.fromLocalFile(
-            QSettings().value(
+    @Slot(bool, result=str)
+    def getFolder(self, local: bool = False):
+        folder = QSettings().value(
                 "folder",
                 QStandardPaths.standardLocations(QStandardPaths.PicturesLocation)[0],
             )
-        )
+        return folder if local else QUrl.fromLocalFile(folder)
 
     def generateImageData(self, count: int, proxyID: int):
         if count > len(self.toGenerateList):
@@ -197,62 +197,6 @@ class ImageModel(QAbstractListModel):
         self.proxies.pop(proxyID, None)
 
 
-class Backend(QObject):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self._visibility = QSettings().value("visibility", "Windowed")
-        self._tickSpeed = QSettings().value("tickSpeed", 10)
-        self._colCount = QSettings().value("colCount", 3)
-        self.colPositions = {}
-
-    def setVisibility(self, visibility: str):
-        self._visibility = visibility
-        QSettings().setValue("visibility", visibility)
-        self.visibilityChanged.emit(visibility)
-
-    @Slot()
-    def toggleVisibility(self):
-        self.setVisibility(
-            "FullScreen" if self._visibility == "Windowed" else "Windowed"
-        )
-
-    @Slot(int)
-    def setTickSpeed(self, tickSpeed: int):
-        self._tickSpeed = tickSpeed
-        QSettings().setValue("tickSpeed", tickSpeed)
-        self.tickSpeedChanged.emit(tickSpeed)
-
-    @Slot(int)
-    def setColCount(self, colCount: int):
-        for idx in range(colCount):
-            if idx > self._colCount:
-                self.colPositions.pop(idx)  # remove unused cols
-        self._colCount = colCount
-        QSettings().setValue("colCount", colCount)
-        self.colCountChanged.emit(colCount)
-
-    @Slot(int, int)
-    def setColPosition(self, col: int, position: int):
-        self.colPositions[col] = position
-
-    @Slot(int, result=int)
-    def getColPosition(self, col: int):
-        return self.colPositions.get(col, 0)
-
-    visibilityChanged = Signal(str)
-    tickSpeedChanged = Signal(int)
-    colCountChanged = Signal(int)
-    visibility = Property(
-        str, lambda self: self._visibility, setVisibility, notify=visibilityChanged
-    )
-    tickSpeed = Property(
-        int, lambda self: self._tickSpeed, setTickSpeed, notify=tickSpeedChanged
-    )
-    colCount = Property(
-        int, lambda self: self._colCount, setColCount, notify=colCountChanged
-    )
-
-
 def main():
     app = QApplication(sys.argv)
     app.setOrganizationName("Ziru's Musings")
@@ -264,10 +208,8 @@ def main():
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     app.setApplicationVersion(version)
 
-    backend = Backend()
     images = ImageModel()
     engine = QQmlApplicationEngine()
-    engine.rootContext().setContextProperty("Backend", backend)
     engine.rootContext().setContextProperty("ImageModel", images)
     engine.load("qrc:/gui")
 
