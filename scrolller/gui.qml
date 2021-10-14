@@ -12,6 +12,7 @@ ApplicationWindow {
     height: 900
     color: "transparent"
     title: qsTr("scrolller")
+    flags: Qt.Window | Qt.FramelessWindowHint
 
     property int colCount: 5
     property int colWidth: width / colCount
@@ -20,7 +21,7 @@ ApplicationWindow {
     Item {
         id: internal
         function addColumn(amt) {
-            if (window.colCount < 1) return
+            if (window.colCount - 1 < 1) return
             if (amt < 0) ImageModel.removeProxy(window.colCount - 1)
             window.colCount += amt
         }
@@ -34,12 +35,11 @@ ApplicationWindow {
             folderDialog.open()
         }
 
-        Shortcut { sequence: "Ctrl+S"; onActivated: internal.changeFolder() }
-        Shortcut { sequence: "Ctrl+C"; onActivated: close() }
-        Shortcut { sequence: "Ctrl+]"; onActivated: internal.addColumn(1) }
-        Shortcut { sequence: "Ctrl+["; onActivated: internal.addColumn(-1) }
+        Shortcut { sequence: StandardKey.Open; onActivated: internal.changeFolder() }
+        Shortcut { sequence: StandardKey.Close; onActivated: close() }
+        Shortcut { sequence: StandardKey.ZoomOut; onActivated: internal.addColumn(1) }
+        Shortcut { sequence: StandardKey.ZoomIn; onActivated: internal.addColumn(-1) }
     }
-
 
     RowLayout {
         anchors.fill: parent
@@ -72,6 +72,7 @@ ApplicationWindow {
                 Timer {
                     id: timer
                     interval: window.tickSpeed
+                    triggeredOnStart: true
                     running: true
                     repeat: true
                     onTriggered: {
@@ -82,10 +83,5 @@ ApplicationWindow {
             }
         }
     }
-
-    // FolderDialog {
-    //     id: folderDialog
-    //     // onAccepted: ImageModel.setFolder(folderDialog.folder)
-    // }
 }
 
