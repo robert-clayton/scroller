@@ -13,7 +13,7 @@ ApplicationWindow {
     color: "transparent"
     title: qsTr("scrolller")
 
-    property int colCount: 3
+    property int colCount: 5
     property int colWidth: width / colCount
 
     Component.onCompleted: {
@@ -25,6 +25,29 @@ ApplicationWindow {
         sequence: "Ctrl+S"
         onActivated: folderDialog.open()
     }
+
+    Shortcut {
+        sequence: "Ctrl+C"
+        onActivated: close()
+    }
+
+    Shortcut {
+        sequence: "Ctrl+]"
+        onActivated: internal.addColumn(1)
+    }
+
+    Shortcut {
+        sequence: "Ctrl+["
+        onActivated: internal.addColumn(-1)
+    }
+
+    Item {
+        id: internal
+        function addColumn(amt) {
+            window.colCount += amt
+        }
+    }
+
 
     RowLayout {
         anchors.fill: parent
@@ -59,7 +82,6 @@ ApplicationWindow {
                 onAtYEndChanged: {
                     if (model == null) return
                     if (view.atYEnd) {
-                        console.log(model.getProxyID() + ': atYEnd')
                         model.generateImages()
                         timer.start()
                     }
@@ -73,7 +95,6 @@ ApplicationWindow {
             }
         }
     }
-    
 
     FolderDialog {
         id: folderDialog
