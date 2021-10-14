@@ -39,7 +39,7 @@ jobs:
         id: buildVersion
         uses: paulhatch/semantic-version@v4.0.2
         with:
-          format: '${major}.${minor}.${patch}-dev${increment}'
+          format: 'v${major}.${minor}.${patch}-dev${increment}'
   
   build:
     name: Build Release
@@ -59,8 +59,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          tag_name: "v${{ needs.meta.outputs.version }}"
-          release_name: "v${{ needs.meta.outputs.version }}"
+          tag_name: ${{ needs.meta.outputs.version }}
+          release_name: ${{ needs.meta.outputs.version }}
           body: |
             ${{ needs.meta.outputs.notes }}
           prerelease: false

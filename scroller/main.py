@@ -187,7 +187,7 @@ class Backend(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._visibility = QSettings().value("visibility", "Windowed")
-        self._tickSpeed = QSettings().value("tickSpeed", 1000)
+        self._tickSpeed = QSettings().value("tickSpeed", 10)
         self._colCount = QSettings().value("colCount", 3)
 
     def setVisibility(self, visibility: str):
