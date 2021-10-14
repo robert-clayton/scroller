@@ -6,4 +6,10 @@ Image {
     height: window.colWidth / model.ratio
     mipmap: true
     asynchronous: true
+
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.MiddleButton
+        onClicked: (mouse) => { internal.saveUrl(model.url) }
+    }
 }

@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.11
 import Qt.labs.platform 1.1
 import Qt.labs.settings 1.0
 import QtQml 2.15
+import QtCore 6.2
 import Qt5Compat.GraphicalEffects
 
 import 'qrc:/delegates'
@@ -19,7 +20,8 @@ ApplicationWindow {
 
     Component.onCompleted: {
         internal.ensureValidWindowPosition()
-        title = qsTr("Scroller") + "      " + ImageModel.getFolder(true)
+        title = qsTr("Scroller") + "      " + settings.folder
+        ImageModel.startup(settings.folder)
     }
     Component.onDestruction: internal.saveScreenLayout()
 
@@ -36,10 +38,12 @@ ApplicationWindow {
             property alias width: window.width
             property alias height: window.height
             property alias visibility: window.visibility
-            property var desktopAvailableWidth
-            property var desktopAvailableHeight
-            property var tickSpeed: 10
-            property var colCount: 5
+            property int desktopAvailableWidth
+            property int desktopAvailableHeight
+            property int tickSpeed: 10
+            property int colCount: 5
+            property string folder: StandardPaths.writableLocation(StandardPaths.PicturesLocation)
+            property string saveFolder: StandardPaths.writableLocation(StandardPaths.PicturesLocation) + '/scroller/saved'
         }
 
         function saveScreenLayout() {
@@ -73,12 +77,15 @@ ApplicationWindow {
                         delete colPositions[i]
         }
 
-        FolderDialog { id: folderDialog }
+        FolderDialog { 
+            id: folderDialog 
+            onAccepted: {
+                settings.folder = folderDialog.folder
+                ImageModel.startup(settings.folder)
+            }
+        }
         function changeFolder() {
-            folderDialog.onAccepted.connect(() => {
-                ImageModel.startup(folderDialog.folder)
-            })
-            folderDialog.folder = ImageModel.getFolder()
+            folderDialog.folder = settings.folder
             folderDialog.open()
         }
 
@@ -89,11 +96,20 @@ ApplicationWindow {
             blur.visible = openingMenu
         }
 
+        function toggleVisibility() {
+            window.visibility = window.visibility == 5 ? 2 : 5
+        }
+
+        function saveUrl(url) {
+            Backend.copyFile(url, settings.saveFolder)
+        }
+
         Shortcut { sequence: StandardKey.Open; onActivated: internal.changeFolder() }
         Shortcut { sequence: "Esc"; onActivated: internal.openMenu(true) }
         Shortcut { sequence: StandardKey.ZoomOut; onActivated: internal.addColumn(1) }
         Shortcut { sequence: StandardKey.ZoomIn; onActivated: internal.addColumn(-1) }
-        Shortcut { sequence: "F11"; onActivated: Backend.toggleVisibility() }
+        Shortcut { sequence: "F10"; onActivated: () => { window.flags = window.flags | Qt.FramelessWindowHint} }
+        Shortcut { sequence: "F11"; onActivated: internal.toggleVisibility() }
         Shortcut { sequence: "Space"; onActivated: () => { window.paused = !window.paused } }
 
         MouseArea { 
@@ -102,7 +118,7 @@ ApplicationWindow {
                 if (wheel.modifiers & Qt.ControlModifier) {
                     internal.addColumn(wheel.angleDelta.y > 0 ? -1 : 1)
                 } else {
-                    settings.tickSpeed += wheel.angleDelta.y > 0 ? 1 : -1
+                    settings.tickSpeed += wheel.angleDelta.y > 0 ? 5 : -5
                 }
             }
         }
@@ -114,7 +130,6 @@ ApplicationWindow {
         Repeater {
             id: repeater
             model: settings.colCount
-            Component.onCompleted: ImageModel.startup()
             ListView {
                 id: view
                 Layout.fillHeight: true

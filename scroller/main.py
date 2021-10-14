@@ -2,11 +2,11 @@ import ctypes
 import os
 import random
 import sys
+import shutil
 from pathlib import Path
-
 from PIL import Image
+
 from PySide6.QtCore import (
-    Property,
     QAbstractListModel,
     QModelIndex,
     QObject,
@@ -19,7 +19,6 @@ from PySide6.QtCore import (
     QtInfoMsg,
     QtWarningMsg,
     QUrl,
-    Signal,
     Slot,
 )
 from PySide6.QtGui import QIcon
@@ -27,14 +26,6 @@ from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
 
 import scroller.qml_rc
-
-
-try:
-    with open(Path(__file__).resolve().parent.parent / "VERSION") as f:
-        version = f.read().strip()
-except FileNotFoundError:
-    version = "0.0.0"
-
 
 def qt_message_handler(mode, context, message):
     if mode == QtInfoMsg:
@@ -88,11 +79,8 @@ class ImageModel(QAbstractListModel):
         self.toGenerateList = []
         self.proxies = {}
 
-    @Slot()
     @Slot(QUrl)
-    def startup(self, folder: QUrl = None):
-        if folder is None:
-            folder = self.getFolder()
+    def startup(self, folder: QUrl):
         self.setFolder(folder)
 
     def data(self, index, role=Qt.DisplayRole):
@@ -124,8 +112,7 @@ class ImageModel(QAbstractListModel):
             return self.imageData[row]
 
     def setFolder(self, folder: QUrl):
-        folder = folder.toLocalFile()
-        QSettings().setValue("folder", folder)
+        folder = folder.toLocalFile() if folder.toLocalFile() else folder.toString()
         self.beginRemoveRows(QModelIndex(), 0, self.rowCount() - 1)
         self.imageData = []
         self.endRemoveRows()
@@ -196,6 +183,24 @@ class ImageModel(QAbstractListModel):
     def removeProxy(self, proxyID: int):
         self.proxies.pop(proxyID, None)
 
+class Backend(QObject):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+    
+    @Slot(QUrl, QUrl, result=bool)
+    def copyFile(self, source: QUrl, destination: QUrl):
+        source = source.toLocalFile()
+        name = os.path.basename(source)
+        destination = destination.toLocalFile()
+        if not os.path.exists(destination):
+            os.makedirs(destination)
+        
+        try:
+            shutil.copy(source, os.path.join(destination, name))
+            return True
+        except PermissionError:
+            return False
+
 
 def main():
     app = QApplication(sys.argv)
@@ -204,13 +209,15 @@ def main():
     app.setApplicationName("scroller")
     app.setDesktopFileName("scroller")
     app.setWindowIcon(QIcon())
-    myappid = f"zirus-musings.scroller.bg.{version}"
+    myappid = f"zirus-musings.scroller.bg.dev"
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-    app.setApplicationVersion(version)
+    app.setApplicationVersion('dev')
 
+    backend = Backend()
     images = ImageModel()
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("ImageModel", images)
+    engine.rootContext().setContextProperty("Backend", backend)
     engine.load("qrc:/gui")
 
     if not engine.rootObjects():
