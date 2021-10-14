@@ -13,18 +13,25 @@ ApplicationWindow {
     color: "transparent"
     title: qsTr("scrolller")
     flags: visibility == "FullScreen" ? (Qt.Window | Qt.FramelessWindowHint) : Qt.Window
-    visibility: Backend.visibility
+    visibility: Backend ? Backend.visibility : "Windowed"
 
-    property int colCount: 5
+    property int colCount: Backend ? Backend.colCount : 1
     property int colWidth: width / colCount
-    property int tickSpeed: 1000
+    property int tickSpeed: Backend ? Backend.tickSpeed : 1
+    
 
     Item {
         id: internal
+        anchors.fill: parent
+
         function addColumn(amt) {
-            if (window.colCount - 1 < 1) return
+            if (window.colCount + amt < 1) return
             if (amt < 0) ImageModel.removeProxy(window.colCount - 1)
-            window.colCount += amt
+            Backend.setColCount(window.colCount + amt)
+        }
+
+        function addTickSpeed(speed) {
+            Backend.setTickSpeed(window.tickSpeed + speed)
         }
 
         FolderDialog { id: folderDialog }
@@ -36,11 +43,22 @@ ApplicationWindow {
             folderDialog.open()
         }
 
-        Shortcut { sequence: StandardKey.Open; onActivated: changeFolder() }
+        Shortcut { sequence: StandardKey.Open; onActivated: internal.changeFolder() }
         Shortcut { sequence: "Esc"; onActivated: close() }
-        Shortcut { sequence: StandardKey.ZoomOut; onActivated: addColumn(1) }
-        Shortcut { sequence: StandardKey.ZoomIn; onActivated: addColumn(-1) }
+        Shortcut { sequence: StandardKey.ZoomOut; onActivated: internal.addColumn(1) }
+        Shortcut { sequence: StandardKey.ZoomIn; onActivated: internal.addColumn(-1) }
         Shortcut { sequence: "F11"; onActivated: Backend.toggleVisibility() }
+
+        MouseArea { 
+            anchors.fill: parent
+            onWheel: (wheel) => {
+                if (wheel.modifiers & Qt.ControlModifier) {
+                    internal.addColumn(wheel.angleDelta.y > 0 ? -1 : 1)
+                } else {
+                    internal.addTickSpeed(wheel.angleDelta.y > 0 ? 1 : -1)
+                }
+            }
+        }
     }
 
     RowLayout {
@@ -69,19 +87,8 @@ ApplicationWindow {
                     if (view.atYEnd) model.generateImages()
                 }
 
-                Behavior on contentY { NumberAnimation{ duration: window.tickSpeed } }
-
-                Timer {
-                    id: timer
-                    interval: window.tickSpeed
-                    triggeredOnStart: true
-                    running: true
-                    repeat: true
-                    onTriggered: {
-                        // flick(60, -70)
-                        contentY += 100
-                    }
-                }
+                Behavior on contentY { NumberAnimation{ duration: 100 } }
+                Timer { interval: 100; running: true; repeat: true; onTriggered: contentY += window.tickSpeed }
             }
         }
     }

@@ -147,14 +147,11 @@ class ImageModel(QAbstractListModel):
         self.proxies.pop(proxyID, None)
 
 class Backend(QObject):
-    visibilityChanged = Signal(str)
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self._visibility = QSettings().value('visibility', 'Windowed')
-    
-    def getVisibility(self):
-        return self._visibility
+        self._tickSpeed = QSettings().value('tickSpeed', 1000)
+        self._colCount = QSettings().value('colCount', 3)
     
     def setVisibility(self, visibility: str):
         self._visibility = visibility
@@ -164,9 +161,25 @@ class Backend(QObject):
     @Slot()
     def toggleVisibility(self):
         self.setVisibility('FullScreen' if self._visibility == 'Windowed' else 'Windowed')
-
     
-    visibility = Property(str, getVisibility, setVisibility, notify=visibilityChanged)
+    @Slot(int)
+    def setTickSpeed(self, tickSpeed: int):
+        self._tickSpeed = tickSpeed
+        QSettings().setValue('tickSpeed', tickSpeed)
+        self.tickSpeedChanged.emit(tickSpeed)
+    
+    @Slot(int)
+    def setColCount(self, colCount: int):
+        self._colCount = colCount
+        QSettings().setValue('colCount', colCount)
+        self.colCountChanged.emit(colCount)
+
+    visibilityChanged = Signal(str)
+    tickSpeedChanged = Signal(int)
+    colCountChanged = Signal(int)
+    visibility = Property(str, lambda self: self._visibility, setVisibility, notify=visibilityChanged)
+    tickSpeed = Property(int, lambda self: self._tickSpeed, setTickSpeed, notify=tickSpeedChanged)
+    colCount = Property(int, lambda self: self._colCount, setColCount, notify=colCountChanged)
 
 def main():
     app = QApplication(sys.argv)
