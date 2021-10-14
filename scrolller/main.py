@@ -7,10 +7,10 @@ import random
 from PySide6.QtWidgets import QApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtCore import QSortFilterProxyModel, Qt, QSettings, QUrl, QObject, Signal, Slot, QStandardPaths, \
-    QtInfoMsg, QtWarningMsg, QtCriticalMsg, QtFatalMsg,  QAbstractListModel, QModelIndex
+        QtInfoMsg, QtWarningMsg, QtCriticalMsg, QtFatalMsg,  QAbstractListModel, QModelIndex, \
+        Property, Signal
 from PySide6.QtGui import QIcon
 from PIL import Image
-# from . import qml_rc
 
 
 try:
@@ -146,6 +146,28 @@ class ImageModel(QAbstractListModel):
     def removeProxy(self, proxyID: int):
         self.proxies.pop(proxyID, None)
 
+class Backend(QObject):
+    visibilityChanged = Signal(str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._visibility = QSettings().value('visibility', 'Windowed')
+    
+    def getVisibility(self):
+        return self._visibility
+    
+    def setVisibility(self, visibility: str):
+        self._visibility = visibility
+        QSettings().setValue('visibility', visibility)
+        self.visibilityChanged.emit(visibility)
+    
+    @Slot()
+    def toggleVisibility(self):
+        self.setVisibility('FullScreen' if self._visibility == 'Windowed' else 'Windowed')
+
+    
+    visibility = Property(str, getVisibility, setVisibility, notify=visibilityChanged)
+
 def main():
     app = QApplication(sys.argv)
     app.setOrganizationName('Ziru\'s Musings')
@@ -157,9 +179,11 @@ def main():
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     app.setApplicationVersion(version)
 
+    backend = Backend()
     images = ImageModel()
     engine = QQmlApplicationEngine()
-    engine.rootContext().setContextProperty("ImageModel", images)
+    engine.rootContext().setContextProperty('Backend', backend)
+    engine.rootContext().setContextProperty('ImageModel', images)
     gui = os.fspath(Path(__file__).resolve().parent / 'gui.qml')
     engine.load(QUrl.fromLocalFile(gui))
 

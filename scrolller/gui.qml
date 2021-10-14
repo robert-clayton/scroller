@@ -12,7 +12,8 @@ ApplicationWindow {
     height: 900
     color: "transparent"
     title: qsTr("scrolller")
-    flags: Qt.Window | Qt.FramelessWindowHint
+    flags: visibility == "FullScreen" ? (Qt.Window | Qt.FramelessWindowHint) : Qt.Window
+    visibility: Backend.visibility
 
     property int colCount: 5
     property int colWidth: width / colCount
@@ -35,10 +36,11 @@ ApplicationWindow {
             folderDialog.open()
         }
 
-        Shortcut { sequence: StandardKey.Open; onActivated: internal.changeFolder() }
-        Shortcut { sequence: StandardKey.Close; onActivated: close() }
-        Shortcut { sequence: StandardKey.ZoomOut; onActivated: internal.addColumn(1) }
-        Shortcut { sequence: StandardKey.ZoomIn; onActivated: internal.addColumn(-1) }
+        Shortcut { sequence: StandardKey.Open; onActivated: changeFolder() }
+        Shortcut { sequence: "Esc"; onActivated: close() }
+        Shortcut { sequence: StandardKey.ZoomOut; onActivated: addColumn(1) }
+        Shortcut { sequence: StandardKey.ZoomIn; onActivated: addColumn(-1) }
+        Shortcut { sequence: "F11"; onActivated: Backend.toggleVisibility() }
     }
 
     RowLayout {
