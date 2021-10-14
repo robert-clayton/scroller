@@ -7,4 +7,4 @@
 - Can now toggle to frameless window (F10)
 
 ## Bugfixes
-- (Bugfix)
+- N/A
