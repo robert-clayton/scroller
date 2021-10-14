@@ -67,7 +67,6 @@ class ImageModel(QAbstractListModel):
     @Slot()
     @Slot(QUrl)
     def startup(self, folder: QUrl = None):
-        print('Starting up')
         if folder is None:
             folder = self.getFolder()
         self.setFolder(folder)
@@ -107,9 +106,7 @@ class ImageModel(QAbstractListModel):
         self.imageList = [os.path.join(folder, file) for file in os.listdir(folder) if file.endswith(('.jpg', '.png'))]
         random.shuffle(self.imageList)
         self.toGenerateList = self.imageList
-        print(f'There are {len(self.proxies)} proxies currently')
         for proxy in self.proxies.values():
-            print(f'Generating images for: {proxy.getProxyID()}')
             self.generateImages(proxyID=proxy.getProxyID())
 
     @Slot(result=QUrl)
@@ -134,7 +131,7 @@ class ImageModel(QAbstractListModel):
     @Slot(result=bool)
     @Slot(int, result=bool)
     @Slot(int, int, result=bool)
-    def generateImages(self, count: int = 15, proxyID: int = 0):
+    def generateImages(self, count: int = 5, proxyID: int = 0):
         self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount() + count - 1)
         self.imageData.extend(self.generateImageData(count, proxyID))
         self.endInsertRows()

@@ -1,6 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.4
-import QtQuick.Layouts 1.15
+import QtQuick.Layouts 1.11
 import Qt.labs.platform 1.1
 import Qt.labs.settings 1.0
 import QtQml 2.15
@@ -15,6 +15,7 @@ ApplicationWindow {
 
     property int colCount: 5
     property int colWidth: width / colCount
+    property int tickSpeed: 1000
 
     Item {
         id: internal
@@ -24,8 +25,8 @@ ApplicationWindow {
             window.colCount += amt
         }
 
+        FolderDialog { id: folderDialog }
         function changeFolder() {
-            const folderDialog = Qt.createComponent("FolderDialog.qml")
             folderDialog.onAccepted.connect(() => {
                 ImageModel.startup(folderDialog.folder)
             })
@@ -51,32 +52,32 @@ ApplicationWindow {
                 Layout.fillHeight: true
                 width: colWidth
                 model: ImageModel.requestProxy(index)
-                highlightRangeMode: ListView.StrictlyEnforceRange
-                boundsBehavior: Flickable.StopAtBounds
                 interactive: false
-                
-                highlightMoveDuration: -1
-                highlightMoveVelocity: 70
 
                 delegate: Image {
                     source: model.url
                     width: window.colWidth
                     height: window.colWidth / model.ratio
                     mipmap: true
+                    asynchronous: true
                 }
 
                 onAtYEndChanged: {
                     if (model == null) return
-                    if (view.atYEnd) {
-                        model.generateImages()
-                        timer.start()
-                    }
+                    if (view.atYEnd) model.generateImages()
                 }
+
+                Behavior on contentY { NumberAnimation{ duration: window.tickSpeed } }
 
                 Timer {
                     id: timer
-                    interval: 1000;
-                    onTriggered: view.currentIndex = view.count - 1
+                    interval: window.tickSpeed
+                    running: true
+                    repeat: true
+                    onTriggered: {
+                        // flick(60, -70)
+                        contentY += 100
+                    }
                 }
             }
         }
