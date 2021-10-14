@@ -6,6 +6,8 @@ import Qt.labs.settings 1.0
 import QtQml 2.15
 import Qt5Compat.GraphicalEffects
 
+import 'qrc:/delegates'
+
 ApplicationWindow {
     id: window
     visible: true
@@ -92,25 +94,18 @@ ApplicationWindow {
                 model: ImageModel.requestProxy(index)
                 interactive: false
 
-                delegate: Component {
-                    // Loader {
-                    //     source: switch(model.type) {
-                    //         case "image":
-                    //             model.path
-                    //         case "video":
-                    //             model.thumbnail
-                    //         default:
-                                Image {
-                                    source: model.url
-                                    width: window.colWidth
-                                    height: window.colWidth / model.ratio
-                                    mipmap: true
-                                    asynchronous: true
-                                }
-                    //     }
-                    // }
-                    
-                }
+                delegate: 
+                    Component {
+                        Loader {
+                            source: switch(model.type) {
+                                case "gif":
+                                    return "delegates/ListDelegateGif.qml"
+                                default:
+                                    return "delegates/ListDelegateImage.qml"
+                            }
+                        }
+                        
+                    }
 
                 onAtYEndChanged: {
                     if (model == null) return

@@ -25,6 +25,7 @@ from PySide6.QtCore import (
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
+
 import scroller.qml_rc
 
 
@@ -33,6 +34,7 @@ try:
         version = f.read().strip()
 except FileNotFoundError:
     version = "0.0.0"
+
 
 def qt_message_handler(mode, context, message):
     if mode == QtInfoMsg:
@@ -77,6 +79,7 @@ class ImageModel(QAbstractListModel):
     url = Qt.UserRole + 1
     proxyID = Qt.UserRole + 2
     ratio = Qt.UserRole + 3
+    type = Qt.UserRole + 4
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -101,6 +104,8 @@ class ImageModel(QAbstractListModel):
                 return self.imageData[row]["proxyID"]
             elif role == ImageModel.ratio:
                 return self.imageData[row]["ratio"]
+            elif role == ImageModel.type:
+                return self.imageData[row]["type"]
 
     def rowCount(self, index=QModelIndex()):
         return len(self.imageData)
@@ -110,6 +115,7 @@ class ImageModel(QAbstractListModel):
             ImageModel.url: b"url",
             ImageModel.proxyID: b"proxyID",
             ImageModel.ratio: b"ratio",
+            ImageModel.type: b"type",
         }
 
     @Slot(int, result="QVariant")
@@ -123,11 +129,7 @@ class ImageModel(QAbstractListModel):
         self.beginRemoveRows(QModelIndex(), 0, self.rowCount() - 1)
         self.imageData = []
         self.endRemoveRows()
-        self.imageList = [
-            os.path.join(folder, file)
-            for file in os.listdir(folder)
-            if file.endswith((".jpg", ".png"))
-        ]
+        self.imageList = [os.path.join(folder, file) for file in os.listdir(folder)]
         random.shuffle(self.imageList)
         self.toGenerateList = self.imageList
         for proxy in self.proxies.values():
@@ -152,13 +154,25 @@ class ImageModel(QAbstractListModel):
             self.toGenerateList[:count],
         )
         for path in generatingList:
+            if path.endswith((".jpg", ".jpeg", "png")):
+                type_ = "image"
+            elif path.endswith((".gif")):
+                type_ = "gif"
+            else:
+                continue
+
             try:
                 with Image.open(path) as img:
                     ratio = img.size[0] / img.size[1]
             except PermissionError:  # file is not readable
                 continue
             data.append(
-                {"url": QUrl.fromLocalFile(path), "ratio": ratio, "proxyID": proxyID}
+                {
+                    "url": QUrl.fromLocalFile(path),
+                    "ratio": ratio,
+                    "proxyID": proxyID,
+                    "type": type_,
+                }
             )
         return data
 
@@ -212,7 +226,7 @@ class Backend(QObject):
     def setColCount(self, colCount: int):
         for idx in range(colCount):
             if idx > self._colCount:
-                self.colPositions.pop(idx) # remove unused cols
+                self.colPositions.pop(idx)  # remove unused cols
         self._colCount = colCount
         QSettings().setValue("colCount", colCount)
         self.colCountChanged.emit(colCount)
@@ -255,7 +269,7 @@ def main():
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("Backend", backend)
     engine.rootContext().setContextProperty("ImageModel", images)
-    engine.load("qrc:/res/gui.qml")
+    engine.load("qrc:/gui")
 
     if not engine.rootObjects():
         sys.exit(-1)
