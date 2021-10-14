@@ -11,7 +11,7 @@ defaults:
 
 jobs:
   Release:
-    name: Metadata
+    name: Release
     runs-on: windows-10
     steps:
       - uses: actions/checkout@v2
