@@ -18,21 +18,23 @@ $(INSTALL_STAMP): pyproject.toml poetry.lock
 .PHONY: generate
 generate: $(INSTALL_STAMP) ## Generates qrc file from .qml object files
 	@if [ -z $(POETRY) ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
-	./bin/generate_qrc.sh
+	@echo "Generating QRC"
+	@./bin/generate_qrc.sh
 
 .PHONY: build
-build: $(INSTALL_STAMP) ## Builds application package
-	poetry run python -m PyInstaller bin/scrolller.spec -y
+build: $(INSTALL_STAMP) generate ## Builds application package
+	@$(POETRY) run python -m PyInstaller bin/scrolller.spec --noconfirm
+	@cat bin/unnecessary_build_files.txt | xargs rm -rf
 
 .PHONY: run
-run: $(INSTALL_STAMP) ## Runs the application
+run: $(INSTALL_STAMP) generate ## Runs the application
 	@if [ -z $(POETRY) ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
 	$(POETRY) run $(NAME)
 
 .PHONY: clean
 clean: ## Cleanup all artifacts
-	find . -type d -name "__pycache__" | xargs rm -rf {};
-	rm -rf $(INSTALL_STAMP) .coverage .mypy_cache
+	@find . -type d -name "__pycache__" | xargs rm -rf {};
+	@rm -rf $(INSTALL_STAMP) .coverage .mypy_cache
 
 .PHONY: lint
 lint: $(INSTALL_STAMP) ## Lint all python files

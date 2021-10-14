@@ -40,27 +40,19 @@ jobs:
         uses: paulhatch/semantic-version@v4.0.2
         with:
           format: '${major}.${minor}.${patch}-dev${increment}'
-      
-      - name: Read Release Notes
-        if: steps.releaseCheck.outputs.type=='release'
-        id: releaseNotes
-        run: |
-          
   
   build:
-    name: Build
+    name: Build Release
+    if: needs.meta.outputs.is-release=='true'
     runs-on: windows-10
     needs: [meta]
     env:
-      package-name: scrolller-${{ needs.meta.outputs.version }}.zip
+      artifact-name: scrolller-${{ needs.meta.outputs.version }}.zip
     steps:
       - uses: actions/checkout@v2
-
-      - name: Build
-        run: make build output=${{ env.artifact-name }}
+      - run: make build
 
       - name: Create Release
-        if: needs.meta.outputs.is-release=='true'
         uses: actions/create-release@master
         id: createRelease
         env:

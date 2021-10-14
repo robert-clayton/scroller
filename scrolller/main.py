@@ -25,6 +25,7 @@ from PySide6.QtCore import (
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
+import scrolller.qml_rc
 
 
 try:
@@ -32,14 +33,6 @@ try:
         version = f.read().strip()
 except FileNotFoundError:
     version = "0.0.0"
-
-# https://stackoverflow.com/a/42615559/6622587
-application_path = (
-    sys._MEIPASS
-    if getattr(sys, "frozen", False)
-    else os.path.dirname(os.path.abspath(__file__))
-)
-
 
 def qt_message_handler(mode, context, message):
     if mode == QtInfoMsg:
@@ -250,8 +243,7 @@ def main():
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("Backend", backend)
     engine.rootContext().setContextProperty("ImageModel", images)
-    gui = os.path.join(application_path, "gui.qml")
-    engine.load(QUrl.fromLocalFile(gui))
+    engine.load("qrc:/gui.qml")
 
     if not engine.rootObjects():
         sys.exit(-1)
