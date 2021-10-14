@@ -25,7 +25,7 @@ from PySide6.QtCore import (
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
-import scrolller.qml_rc
+import scroller.qml_rc
 
 
 try:
@@ -231,10 +231,10 @@ def main():
     app = QApplication(sys.argv)
     app.setOrganizationName("Ziru's Musings")
     app.setOrganizationDomain("github.com/robert-clayton")
-    app.setApplicationName("scrolller")
-    app.setDesktopFileName("scrolller")
+    app.setApplicationName("scroller")
+    app.setDesktopFileName("scroller")
     app.setWindowIcon(QIcon())
-    myappid = f"zirus-musings.scrolller.bg.{version}"
+    myappid = f"zirus-musings.scroller.bg.{version}"
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     app.setApplicationVersion(version)
 

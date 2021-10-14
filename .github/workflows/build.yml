@@ -47,7 +47,7 @@ jobs:
     runs-on: windows-10
     needs: [meta]
     env:
-      artifact-name: scrolller-${{ needs.meta.outputs.version }}.zip
+      artifact-name: scroller-${{ needs.meta.outputs.version }}.zip
     steps:
       - uses: actions/checkout@v2
       - run: make build

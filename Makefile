@@ -1,4 +1,4 @@
-NAME := scrolller
+NAME := scroller
 INSTALL_STAMP := .install.stamp
 POETRY := $(shell command -v poetry 2> /dev/null)
 
@@ -23,7 +23,7 @@ generate: $(INSTALL_STAMP) ## Generates qrc file from .qml object files
 
 .PHONY: build
 build: $(INSTALL_STAMP) generate ## Builds application package
-	@$(POETRY) run python -m PyInstaller bin/scrolller.spec --noconfirm
+	@$(POETRY) run python -m PyInstaller bin/scroller.spec --noconfirm
 	@cat bin/unnecessary_build_files.txt | xargs rm -rf
 
 .PHONY: run

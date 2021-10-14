@@ -1,4 +1,4 @@
-from scrolller.main import main
+from scroller.main import main
 
 
 if __name__ == "__main__":

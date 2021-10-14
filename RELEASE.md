@@ -1,4 +1,4 @@
-# Scrolller Release <version> 
+# scroller Release <version> 
 
 ## New Additions
 - (New feature)

@@ -11,7 +11,7 @@ ApplicationWindow {
     width: 1600
     height: 900
     color: "transparent"
-    title: qsTr("scrolller")
+    title: qsTr("scroller")
     flags: visibility == "FullScreen" ? (Qt.Window | Qt.FramelessWindowHint) : Qt.Window
     visibility: Backend ? Backend.visibility : "Windowed"
 
