@@ -33,6 +33,13 @@ try:
 except FileNotFoundError:
     version = "0.0.0"
 
+# https://stackoverflow.com/a/42615559/6622587
+application_path = (
+    sys._MEIPASS
+    if getattr(sys, "frozen", False)
+    else os.path.dirname(os.path.abspath(__file__))
+)
+
 
 def qt_message_handler(mode, context, message):
     if mode == QtInfoMsg:
@@ -243,7 +250,7 @@ def main():
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("Backend", backend)
     engine.rootContext().setContextProperty("ImageModel", images)
-    gui = os.fspath(Path(__file__).resolve().parent / "gui.qml")
+    gui = os.path.join(application_path, "gui.qml")
     engine.load(QUrl.fromLocalFile(gui))
 
     if not engine.rootObjects():

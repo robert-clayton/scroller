@@ -20,6 +20,10 @@ generate: $(INSTALL_STAMP) ## Generates qrc file from .qml object files
 	@if [ -z $(POETRY) ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
 	./bin/generate_qrc.sh
 
+.PHONY: build
+build: $(INSTALL_STAMP) ## Builds application package
+	poetry run python -m PyInstaller bin/scrolller.spec -y
+
 .PHONY: run
 run: $(INSTALL_STAMP) ## Runs the application
 	@if [ -z $(POETRY) ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi

@@ -1,0 +1,83 @@
+name: Build
+
+on:
+  push:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  meta:
+    name: Metadata
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.releaseCheck.outputs.version || steps.buildVersion.outputs.version }}
+      is-release: ${{ steps.releaseCheck.outputs.is-release }}
+      notes: ${{ steps.releaseCheck.outputs.notes }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      
+      - name: Check Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        id: releaseCheck
+        run: |
+          TAG="${${{ github.ref }}#'refs/tags/v'}"
+          echo "::set-output name=version::$TAG"
+          echo "::set-output name=is-release::true"
+          sed -i 's/<version>/$TAG/g' RELEASE.md
+          RELEASE=$(cat RELEASE.md)
+          RELEASE="${RELEASE//'%'/'%25'}"
+          RELEASE="${RELEASE//$'\n'/'%0A'}"
+          RELEASE="${RELEASE//$'\r'/'%0D'}"
+          echo "::set-output name=notes::$RELEASE"
+
+      - name: Get Version
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+        id: buildVersion
+        uses: paulhatch/semantic-version@v4.0.2
+        with:
+          format: '${major}.${minor}.${patch}-dev${increment}'
+      
+      - name: Read Release Notes
+        if: steps.releaseCheck.outputs.type=='release'
+        id: releaseNotes
+        run: |
+          
+  
+  build:
+    name: Build
+    runs-on: windows-10
+    needs: [meta]
+    env:
+      package-name: scrolller-${{ needs.meta.outputs.version }}.zip
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build
+        run: make build output=${{ env.artifact-name }}
+
+      - name: Create Release
+        if: needs.meta.outputs.is-release=='true'
+        uses: actions/create-release@master
+        id: createRelease
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          tag_name: "v${{ needs.meta.outputs.version }}"
+          release_name: "v${{ needs.meta.outputs.version }}"
+          body: |
+            ${{ needs.meta.outputs.notes }}
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.createRelease.outputs.upload_url }}
+          asset_path: ./${{ env.artifact-name }}
+          asset_name: ${{ env.artifact-name }}
+          asset_content_type: application/octet-stream
