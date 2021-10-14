@@ -1,8 +1,9 @@
 name: Build
 
 on:
-  tags: 
-    - v*
+  push:
+    tags: 
+      - v*
 
 defaults:
   run:
