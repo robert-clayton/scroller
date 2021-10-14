@@ -26,6 +26,7 @@ jobs:
       - name: Release Notes
         id: notes
         run: |
+          sed -i 's/<version>/${{ github.event.inputs.version }}/g' RELEASE.md
           RELEASE=$(cat RELEASE.md)
           RELEASE="${RELEASE//'%'/'%25'}"
           RELEASE="${RELEASE//$'\n'/'%0A'}"
