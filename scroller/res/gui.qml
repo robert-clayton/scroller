@@ -118,6 +118,9 @@ ApplicationWindow {
             onWheel: (wheel) => {
                 if (wheel.modifiers & Qt.ControlModifier) {
                     internal.addColumn(wheel.angleDelta.y > 0 ? -1 : 1)
+                } else if (wheel.modifiers & Qt.ShiftModifier) {
+                    window.opacity += wheel.angleDelta.y > 0 ? 0.02 : -0.02
+                    window.opacity = Math.min(Math.max(window.opacity, 0.02), 1)
                 } else {
                     settings.tickSpeed += wheel.angleDelta.y > 0 ? 5 : -5
                 }
