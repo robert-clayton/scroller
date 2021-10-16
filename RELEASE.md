@@ -3,5 +3,5 @@
 ## New Additions
 - Change opacity of the application (Shift+Scroll)
 
-## Bugfixes
-- N/A
+## Bugs Fixed
+- Columns not properly resizing when decreasing window width

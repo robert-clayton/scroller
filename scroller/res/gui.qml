@@ -131,16 +131,15 @@ ApplicationWindow {
     RowLayout {
         anchors.fill: parent
         id: container
+        spacing: 0
         Repeater {
             id: repeater
             model: settings.colCount
             ListView {
                 id: view
                 Layout.fillHeight: true
-                width: colWidth
                 model: ImageModel.requestProxy(index)
                 interactive: false
-
                 delegate: 
                     Component {
                         Loader {
@@ -154,11 +153,10 @@ ApplicationWindow {
                     }
 
                 onAtYEndChanged: {
-                    if (model == null)
-                        return
-                    if (view.atYEnd)
-                        model.generateImages()
+                    if (model == null) return
+                    if (view.atYEnd) model.generateImages()
                 }
+
                 Behavior on contentY { id: behaviorContentY; NumberAnimation{ duration: 100 } }
                 Timer { interval: 100; running: !window.paused; repeat: true; onTriggered: contentY += settings.tickSpeed }
             }
