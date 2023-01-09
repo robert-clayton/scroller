@@ -20,10 +20,18 @@ ApplicationWindow {
 
     Component.onCompleted: {
         internal.ensureValidWindowPosition()
-        title = qsTr("Scroller") + "      " + settings.folder
+        title = qsTr("Scroller") + " | " + settings.folder
         ImageModel.startup(settings.folder)
     }
     Component.onDestruction: internal.saveScreenLayout()
+
+    Connections {
+        target: settings
+        function onFolderChanged() {
+            title = qsTr("Scroller") + " | " + settings.folder
+        }
+    }
+    
 
     Item {
         id: internal
