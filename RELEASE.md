@@ -1,7 +1,8 @@
 # scroller release <version> 
 
 ## New Additions
-- Change opacity of the application (Shift+Scroll)
+- Multithreading
+
 
 ## Bugs Fixed
-- Columns not properly resizing when decreasing window width
+- Lowered chance of seeing black columns
