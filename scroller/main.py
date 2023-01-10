@@ -19,7 +19,7 @@ from PySide6.QtCore import (
     QtInfoMsg,
     QtWarningMsg,
     QUrl,
-    Slot,
+    Slot
 )
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlApplicationEngine
@@ -108,8 +108,10 @@ class ImageModel(QAbstractListModel):
 
     @Slot(int, result="QVariant")
     def get(self, row):
-        if 0 <= row < self.rowCount():
+        try:
             return self.imageData[row]
+        except IndexError:
+            return QVariant()
 
     def setFolder(self, folder: QUrl):
         folder = folder.toLocalFile() if folder.toLocalFile() else folder.toString()
@@ -141,9 +143,11 @@ class ImageModel(QAbstractListModel):
             self.toGenerateList[:count],
         )
         for path in generatingList:
-            if path.endswith((".jpg", ".jpeg", "png")):
+            _, ext = os.path.splitext(path)
+            ext = ext.lower()
+            if ext in (".jpg", ".jpeg", "png"):
                 type_ = "image"
-            elif path.endswith((".gif")):
+            elif ext == ".gif":
                 type_ = "gif"
             else:
                 continue
@@ -167,9 +171,8 @@ class ImageModel(QAbstractListModel):
     @Slot(int, result=bool)
     @Slot(int, int, result=bool)
     def generateImages(self, count: int = 5, proxyID: int = 0):
-        self.beginInsertRows(
-            QModelIndex(), self.rowCount(), self.rowCount() + count - 1
-        )
+        index = self.rowCount()
+        self.beginInsertRows(QModelIndex(), index, index + count - 1)
         self.imageData.extend(self.generateImageData(count, proxyID))
         self.endInsertRows()
         return True

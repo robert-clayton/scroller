@@ -148,6 +148,7 @@ ApplicationWindow {
                 Layout.fillHeight: true
                 model: ImageModel.requestProxy(index)
                 interactive: false
+                cacheBuffer: 10
                 delegate: 
                     Component {
                         Loader {
