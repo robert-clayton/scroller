@@ -69,7 +69,7 @@ ApplicationWindow {
 
         function addColumn(amt) {
             const previousWidth = window.colWidth
-            if (settings.colCount + amt < 1)
+            if (settings.colCount + amt < 1 || settings.colCount + amt > 10)
                 return
             for (var i = 0; i < repeater.count; i++)
                 colPositions[i] = repeater.itemAt(i).contentY
