@@ -163,7 +163,7 @@ ApplicationWindow {
 
                 onAtYEndChanged: {
                     if (model == null) return
-                    if (view.atYEnd) model.generateImages()
+                    if (view.atYEnd) model.generateImages(cacheBuffer) 
                 }
 
                 Behavior on contentY { id: behaviorContentY; NumberAnimation{ duration: 100 } }

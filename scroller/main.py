@@ -57,9 +57,9 @@ class ImageProxy(QSortFilterProxyModel):
             == self.proxyID
         )
 
-    @Slot()
-    def generateImages(self):
-        self.sourceModel().generateImages(proxyID=self.proxyID)
+    @Slot(int)
+    def generateImages(self, count: int):
+        self.sourceModel().generateImages(count=count, proxyID=self.proxyID)
 
     @Slot(result=int)
     def getProxyID(self):
@@ -122,7 +122,7 @@ class ImageModel(QAbstractListModel):
         random.shuffle(self.imageList)
         self.toGenerateList = self.imageList
         for proxy in self.proxies.values():
-            self.generateImages(proxyID=proxy.getProxyID())
+            self.generateImages(count=10, proxyID=proxy.getProxyID())
 
     @Slot(result=QUrl)
     @Slot(bool, result=str)
@@ -170,7 +170,7 @@ class ImageModel(QAbstractListModel):
     @Slot(result=bool)
     @Slot(int, result=bool)
     @Slot(int, int, result=bool)
-    def generateImages(self, count: int = 5, proxyID: int = 0):
+    def generateImages(self, count: int = 1, proxyID: int = 0):
         index = self.rowCount()
         self.beginInsertRows(QModelIndex(), index, index + count - 1)
         self.imageData.extend(self.generateImageData(count, proxyID))
