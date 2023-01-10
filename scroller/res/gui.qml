@@ -131,6 +131,7 @@ ApplicationWindow {
                     window.opacity = Math.min(Math.max(window.opacity, 0.02), 1)
                 } else {
                     settings.tickSpeed += wheel.angleDelta.y > 0 ? 5 : -5
+                    settings.tickSpeed = Math.min(Math.max(settings.tickSpeed, 0), 100)
                 }
             }
         }
@@ -146,6 +147,7 @@ ApplicationWindow {
             ListView {
                 id: view
                 Layout.fillHeight: true
+                Layout.fillWidth: true
                 model: ImageModel.requestProxy(index)
                 interactive: false
                 cacheBuffer: 10
