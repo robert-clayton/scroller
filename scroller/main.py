@@ -3,7 +3,6 @@ import os
 import random
 import sys
 import shutil
-from pathlib import Path
 from PIL import Image
 
 from PySide6.QtCore import (
@@ -19,7 +18,11 @@ from PySide6.QtCore import (
     QtInfoMsg,
     QtWarningMsg,
     QUrl,
-    Slot
+    Slot,
+    Signal,
+    QRunnable,
+    QThread,
+    QThreadPool
 )
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlApplicationEngine
@@ -75,9 +78,12 @@ class ImageModel(QAbstractListModel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.imageData = []
+        self.proxies = {}
         self.imageList = []
         self.toGenerateList = []
-        self.proxies = {}
+
+        self.threadPool = QThreadPool()
+        self.threadPool.setMaxThreadCount(10)
 
     @Slot(QUrl)
     def startup(self, folder: QUrl):
@@ -118,9 +124,11 @@ class ImageModel(QAbstractListModel):
         self.beginRemoveRows(QModelIndex(), 0, self.rowCount() - 1)
         self.imageData = []
         self.endRemoveRows()
+
         self.imageList = [os.path.join(folder, file) for file in os.listdir(folder) if file.endswith((".jpg", ".jpeg", ".png", ".gif"))]
         random.shuffle(self.imageList)
         self.toGenerateList = self.imageList
+
         for proxy in self.proxies.values():
             self.generateImages(count=10, proxyID=proxy.getProxyID())
 
@@ -133,16 +141,10 @@ class ImageModel(QAbstractListModel):
             )
         return folder if local else QUrl.fromLocalFile(folder)
 
-    def generateImageData(self, count: int, proxyID: int):
-        if count > len(self.toGenerateList):
-            random.shuffle(self.imageList)
-            self.toGenerateList = self.imageList
+    @Slot(list, result=list)
+    def generateImageData(self, generationList: list, proxyID: int):
         data = []
-        self.toGenerateList, generatingList = (
-            self.toGenerateList[count:],
-            self.toGenerateList[:count],
-        )
-        for path in generatingList:
+        for path in generationList:
             _, ext = os.path.splitext(path)
             ext = ext.lower()
             if ext in (".jpg", ".jpeg", "png"):
@@ -171,11 +173,29 @@ class ImageModel(QAbstractListModel):
     @Slot(int, result=bool)
     @Slot(int, int, result=bool)
     def generateImages(self, count: int = 1, proxyID: int = 0):
-        index = self.rowCount()
-        self.beginInsertRows(QModelIndex(), index, index + count - 1)
-        self.imageData.extend(self.generateImageData(count, proxyID))
-        self.endInsertRows()
+        if count > len(self.toGenerateList):
+            random.shuffle(self.imageList)
+            self.toGenerateList = self.imageList
+        
+        self.toGenerateList, generationList = (
+            self.toGenerateList[count:],
+            self.toGenerateList[:count],
+        )
+
+        thread = Generator(self.generateImageData, generationList, proxyID)
+        thread.signals.dataGenerated.connect(self._onDataGenerated)
+        thread.signals.error.connect(self._onError)
+        self.threadPool.start(thread)
         return True
+
+    def _onDataGenerated(self, data):
+        index = self.rowCount()
+        self.beginInsertRows(QModelIndex(), index, index + len(data) - 1)
+        self.imageData.extend(data)
+        self.endInsertRows()
+
+    def _onError(self, error):
+        print(f"An error occurred with the thread: {error}")
 
     @Slot(int, result=QAbstractListModel)
     def requestProxy(self, proxyID: int):
@@ -185,6 +205,27 @@ class ImageModel(QAbstractListModel):
     @Slot(int)
     def removeProxy(self, proxyID: int):
         self.proxies.pop(proxyID, None)
+
+
+class GeneratorSignals(QObject):
+    dataGenerated = Signal(list)
+    error = Signal(str)
+    imageFolderSet = Signal()
+
+class Generator(QRunnable):
+    def __init__(self, task, generationList: list, proxyID: int):
+        super().__init__()
+        self.signals = GeneratorSignals()
+        self.task = task
+        self.generationList = generationList
+        self.proxyID = proxyID
+
+    def run(self):
+        try:
+            data = self.task(self.generationList, self.proxyID)
+            self.signals.dataGenerated.emit(data)
+        except Exception as e:
+            self.signals.error.emit(str(e))
 
 class Backend(QObject):
     def __init__(self, parent=None):
