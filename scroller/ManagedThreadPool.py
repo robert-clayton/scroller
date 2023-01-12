@@ -15,17 +15,15 @@ class ManagedThreadPool(QThreadPool):
         super().__init__(*args, **kwargs)
         self.activeThreads = []
     
-    def start(self, runnable, priority=QThread.NormalPriority):
+    def start(self, runnable):
         """
         Start a new thread and add it to the list of active threads.
 
         Args:
             runnable (QRunnable): The runnable to be executed by the thread.
-            priority (QThread.Priority): The priority of the thread.
         """
-        runnable.signals.finished.connect(lambda : self._onRunnableFinished(runnable))
         self.activeThreads.append(runnable)
-        super().start(runnable, priority)
+        super().start(runnable, 0)
     
     def cancel(self, runnable):
         """
@@ -35,7 +33,7 @@ class ManagedThreadPool(QThreadPool):
             runnable (QRunnable): The runnable to be canceled.
         """
         if runnable in self.activeThreads:
-            runnable.signals.finished.disconnect()
+            runnable.signals.dataGenerated.disconnect()
             self.activeThreads.remove(runnable)
         else:
             print("Thread not found")

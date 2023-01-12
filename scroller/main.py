@@ -2,7 +2,7 @@ import ctypes
 import os
 import sys
 import shutil
-from PySide6.QtCore import QObject, QtCriticalMsg, QtFatalMsg, QtInfoMsg, QtWarningMsg, QUrl, Slot
+from PySide6.QtCore import QObject, QUrl, Slot, QtMsgType
 from PySide6.QtGui import QIcon
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
@@ -18,13 +18,13 @@ def qt_message_handler(mode, context, message):
         context (QtMessageHandlerContext): The message context.
         message (str): The message text.
     """
-    if mode == QtInfoMsg:
+    if mode == QtMsgType.QtInfoMsg:
         mode = "Info"
-    elif mode == QtWarningMsg:
+    elif mode == QtMsgType.QtWarningMsg:
         mode = "Warning"
-    elif mode == QtCriticalMsg:
+    elif mode == QtMsgType.QtCriticalMsg:
         mode = "critical"
-    elif mode == QtFatalMsg:
+    elif mode == QtMsgType.QtFatalMsg:
         mode = "fatal"
     else:
         mode = "Debug"

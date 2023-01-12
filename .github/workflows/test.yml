@@ -1,0 +1,17 @@
+name: Test (CI)
+
+on:
+  push:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  Test:
+    name: Test
+    runs-on: windows-10
+    steps:
+      - uses: actions/checkout@v2
+      - run: poetry install
+      - run: poetry run pytest
