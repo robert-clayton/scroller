@@ -1,6 +1,5 @@
 import pytest
 from PySide6.QtCore import QThreadPool
-from pytestqt.qtbot import QtBot
 from scroller.Generator import Generator
 
 @pytest.fixture
