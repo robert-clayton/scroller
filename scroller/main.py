@@ -10,6 +10,14 @@ from scroller.ImageModel import ImageModel
 import scroller.qml_rc
 
 def qt_message_handler(mode, context, message):
+    """
+    A function that handles messages emitted by the Qt library.
+
+    Args:
+        mode (int): The message type.
+        context (QtMessageHandlerContext): The message context.
+        message (str): The message text.
+    """
     if mode == QtInfoMsg:
         mode = "Info"
     elif mode == QtWarningMsg:
@@ -26,11 +34,21 @@ def qt_message_handler(mode, context, message):
 
 
 class Backend(QObject):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-    
+    """
+    A class that provides functionality to the GUI.
+    """
     @Slot(QUrl, QUrl, result=bool)
     def copyFile(self, source: QUrl, destination: QUrl):
+        """
+        Copy a file from the source path to the destination path.
+
+        Args:
+            source (QUrl): The path of the source file.
+            destination (QUrl): The path of the destination folder.
+
+        Returns:
+            bool: True if the file is copied successfully, False otherwise.
+        """
         source = source.toLocalFile()
         name = os.path.basename(source)
         destination = destination.toLocalFile()
@@ -43,8 +61,10 @@ class Backend(QObject):
         except PermissionError:
             return False
 
-
 def main():
+    """
+    The main entry point of the application.
+    """
     app = QApplication(sys.argv)
     app.setOrganizationName("Ziru's Musings")
     app.setOrganizationDomain("github.com/robert-clayton")
@@ -66,3 +86,4 @@ def main():
         sys.exit(-1)
 
     sys.exit(app.exec_())
+
