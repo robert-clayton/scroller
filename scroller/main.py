@@ -1,4 +1,5 @@
 import ctypes
+from ctypes.wintypes import VARIANT_BOOL
 import os
 import random
 import sys
@@ -68,6 +69,30 @@ class ImageProxy(QSortFilterProxyModel):
     def getProxyID(self):
         return self.proxyID
 
+class ManagedThreadPool(QThreadPool):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.activeThreads = []
+    
+    def start(self, runnable, priority=QThread.NormalPriority):
+        runnable.signals.finished.connect(lambda : self._onRunnableFinished(runnable))
+        self.activeThreads.append(runnable)
+        super().start(runnable, priority)
+    
+    def cancel(self, runnable):
+        if runnable in self.activeThreads:
+            runnable.signals.finished.disconnect()
+            self.activeThreads.remove(runnable)
+        else:
+            print("Thread not found")
+    
+    def cancelAll(self):
+        for runnable in self.activeThreads:
+            self.cancel(runnable)
+    
+    def _onRunnableFinished(self, runnable):
+        if runnable in self.activeThreads:
+            self.activeThreads.remove(runnable)
 
 class ImageModel(QAbstractListModel):
     url = Qt.UserRole + 1
@@ -82,7 +107,7 @@ class ImageModel(QAbstractListModel):
         self.imageList = []
         self.toGenerateList = []
 
-        self.threadPool = QThreadPool()
+        self.threadPool = ManagedThreadPool()
         self.threadPool.setMaxThreadCount(10)
 
     @Slot(QUrl)
@@ -117,7 +142,7 @@ class ImageModel(QAbstractListModel):
         try:
             return self.imageData[row]
         except IndexError:
-            return QVariant()
+            return VARIANT_BOOL()
 
     def setFolder(self, folder: QUrl):
         folder = folder.toLocalFile() if folder.toLocalFile() else folder.toString()
@@ -128,6 +153,8 @@ class ImageModel(QAbstractListModel):
         self.imageList = [os.path.join(folder, file) for file in os.listdir(folder) if file.endswith((".jpg", ".jpeg", ".png", ".gif"))]
         random.shuffle(self.imageList)
         self.toGenerateList = self.imageList
+
+        self.threadPool.cancelAll()
 
         for proxy in self.proxies.values():
             self.generateImages(count=10, proxyID=proxy.getProxyID())
@@ -211,6 +238,7 @@ class GeneratorSignals(QObject):
     dataGenerated = Signal(list)
     error = Signal(str)
     imageFolderSet = Signal()
+    finished = Signal()
 
 class Generator(QRunnable):
     def __init__(self, task, generationList: list, proxyID: int):
@@ -226,6 +254,7 @@ class Generator(QRunnable):
             self.signals.dataGenerated.emit(data)
         except Exception as e:
             self.signals.error.emit(str(e))
+        self.signals.finished.emit()
 
 class Backend(QObject):
     def __init__(self, parent=None):

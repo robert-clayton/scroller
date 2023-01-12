@@ -1,8 +1,8 @@
 # scroller release <version> 
 
 ## New Additions
-- Multithreading
+- 
 
 
 ## Bugs Fixed
-- Lowered chance of seeing black columns
+- Fixed issue causing empty columns upon swapping target folder
