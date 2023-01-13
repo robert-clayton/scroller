@@ -1,3 +1,10 @@
+<!-- center div -->
+
+<p align="center">
+    ![Scroller](/res/logo.png)
+</p>
+
+
 # Scroller
 
 A simple application that scrolls through a folder's images.
