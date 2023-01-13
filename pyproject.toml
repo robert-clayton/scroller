@@ -1,10 +1,11 @@
 [tool.poetry]
 name = "scroller"
-version = "0.2.0"
+version = "0.2.1"
 description = ""
 authors = ["robert-clayton <41345902+robert-clayton@users.noreply.github.com>"]
-license = "MIT"
+license = "LGPLv2.1"
 readme = "README.md"
+include = ["scroller/qml_rc.py"]
 
 [tool.poetry.dependencies]
 python = ">=3.9, <3.12"

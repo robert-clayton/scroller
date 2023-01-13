@@ -1,4 +1,4 @@
-from PySide6.QtCore import QThreadPool, QThread
+from PySide6.QtCore import QThreadPool
 
 class ManagedThreadPool(QThreadPool):
     """

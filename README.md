@@ -1,4 +1,4 @@
-<p align="center"><img src=./res/logo.png></p>
+<p align="center"><img src="https://i.ibb.co/RD4j25F/logo.png"></p>
 
 # scroller
 [![Test (CI)](https://github.com/robert-clayton/scroller/actions/workflows/test.yml/badge.svg)](https://github.com/robert-clayton/scroller/actions/workflows/test.yml)
@@ -28,23 +28,27 @@ A simple application that scrolls through a folder's images.
 - Poetry
 
 ## Installation
-Navigate to the releases page found [here](https://github.com/robert-clayton/scroller/releases) and download the latest release. Extract the contents of the `scroller-v*.zip` archive and run `scroller.exe` found within.
+
+```sh
+pip install scroller
+```
+
+Alternatively, navigate to the GitHub [releases page](https://github.com/robert-clayton/scroller/releases).
 
 ## Usage
-To run the application, execute the following command:
 ```sh
-make run scroller
+scroller
 ```
 
 ## Development
-Clone the repository and run the following commands to install dependencies:
 ```sh
 git clone https://github.com/robert-clayton/scroller.git
-cd scroller && make install
+cd scroller
+make install
+make run
 ```
 
 ## Testing
-To run the tests, execute the following command:
 ```sh
 make test
 ```
@@ -66,4 +70,4 @@ Please help us keep our issue list small by adding fixes: #{$ISSUE_NO} to the co
 - `Middle Mouse Button` - saves the hovered image to `~/pictures/saved` (on windows)
 
 ## License
-This project is licensed under the [MIT](LICENSE) License. 
+This project is licensed under the [LGPLv2.1](LICENSE) License. 
