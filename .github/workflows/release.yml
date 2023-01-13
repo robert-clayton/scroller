@@ -1,11 +1,9 @@
-name: Release
+name: Release (CD)
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        required: true
-        default: v0.1.0
+  push:
+    paths:
+      - 'pyproject.toml'
 
 defaults:
   run:
@@ -22,7 +20,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      
+
       - name: Release Notes
         id: notes
         run: |
@@ -33,10 +31,23 @@ jobs:
           RELEASE="${RELEASE//$'\r'/'%0D'}"
           echo "::set-output name=notes::$RELEASE"
 
-      - uses: actions/checkout@v2
-      - run: make build
-      - run: echo ${{ github.event.inputs.version }} > dist/scroller/VERSION
-      - run: 7z a -tzip scroller-${{ github.event.inputs.version }}.zip dist/scroller
+      - name: Compare Versions
+        run: |
+          CUR_VERSION=$(poetry version | cut -d ' ' -f 2)
+          PRE_VERSION=$(git describe --tags `git rev-list --tags --max-count=1` | cut -c 2-)
+
+          if [ "$CUR_VERSION" \<= "$PRE_VERSION" ]; then
+            exit 1
+          fi
+
+      - name: Install Dependencies
+        run: make install
+
+      - name: Build
+        run: make build
+
+      - name: Zip Artifact
+        run: 7z a -tzip scroller-${{ github.event.inputs.version }}.zip dist/scroller
 
       - name: Create Release
         uses: actions/create-release@master
