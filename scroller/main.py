@@ -3,7 +3,7 @@ import os
 import sys
 import shutil
 from PySide6.QtCore import QObject, QUrl, Slot, QtMsgType
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QPixmap
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
 from scroller.ImageModel import ImageModel
@@ -70,7 +70,7 @@ def main():
     app.setOrganizationDomain("github.com/robert-clayton")
     app.setApplicationName("scroller")
     app.setDesktopFileName("scroller")
-    app.setWindowIcon(QIcon())
+    app.setWindowIcon(QPixmap('res/logo.png'))
     myappid = f"zirus-musings.scroller.bg.dev"
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     app.setApplicationVersion('dev')

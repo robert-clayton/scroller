@@ -1,9 +1,9 @@
 <RCC>
   <qresource prefix="/">
-    <file alias='gui'>res/gui.qml</file>
+    <file alias='gui'>qml/gui.qml</file>
   </qresource>
   <qresource prefix="/delegates">
-    <file alias='ListDelegateImage.qml'>res/delegates/ListDelegateImage.qml</file>
-    <file alias='ListDelegateGif.qml'>res/delegates/ListDelegateGif.qml</file>
+    <file alias='ListDelegateImage.qml'>qml/delegates/ListDelegateImage.qml</file>
+    <file alias='ListDelegateGif.qml'>qml/delegates/ListDelegateGif.qml</file>
   </qresource>
 </RCC>
