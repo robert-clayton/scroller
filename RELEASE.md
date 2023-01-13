@@ -1,7 +1,7 @@
 # scroller release <version> 
 
 ## New Additions
-- 
+- Applincation icon
 
 
 ## Bugs Fixed

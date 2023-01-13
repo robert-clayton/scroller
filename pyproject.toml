@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "scroller"
-version = "0.1.4"
+version = "0.2.0"
 description = ""
 authors = ["robert-clayton <41345902+robert-clayton@users.noreply.github.com>"]
 license = "MIT"
