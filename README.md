@@ -1,4 +1,4 @@
-<center><img src=./res/logo.png></center>
+<p align="center"><img src=./res/logo.png></p>
 
 # scroller
 [![Test (CI)](https://github.com/robert-clayton/scroller/actions/workflows/test.yml/badge.svg)](https://github.com/robert-clayton/scroller/actions/workflows/test.yml)
