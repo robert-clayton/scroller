@@ -29,7 +29,7 @@ jobs:
           RELEASE="${RELEASE//'%'/'%25'}"
           RELEASE="${RELEASE//$'\n'/'%0A'}"
           RELEASE="${RELEASE//$'\r'/'%0D'}"
-          echo "::set-output name=notes::$RELEASE"
+          echo "notes=$RELEASE" >> $GITHUB_STATE
 
       - name: Compare Versions
         id: compare
@@ -38,7 +38,7 @@ jobs:
           PRE_VERSION=$(git describe --tags `git rev-list --tags --max-count=1` | cut -c 2-)
 
           if [ "$CUR_VERSION" \> "$PRE_VERSION" ]; then
-            echo "::set-output name=version::$CUR_VERSION"
+            echo "version=$CUR_VERSION" >> $GITHUB_STATE
           else
             exit 1
           fi
@@ -50,7 +50,7 @@ jobs:
         run: make build
 
       - name: Zip Artifact
-        run: 7z a -tzip scroller-${{ github.steps.compare.outputs.version }}.zip dist/scroller
+        run: 7z a -tzip scroller-${{ steps.compare.outputs.version }}.zip dist/scroller
 
       - name: Create Release
         uses: actions/create-release@master
@@ -58,8 +58,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          tag_name: v${{ github.steps.compare.outputs.version }}
-          release_name: v${{ github.steps.compare.outputs.version }}
+          tag_name: v${{ steps.compare.outputs.version }}
+          release_name: v${{ steps.compare.outputs.version }}
           body: |
             ${{ steps.notes.outputs.notes }}
           prerelease: false
