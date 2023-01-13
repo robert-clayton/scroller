@@ -24,7 +24,8 @@ A simple application that scrolls through a folder's images.
 
 ## Prerequisites
 - Python >=3.9, <3.12
-- PySide6
+- Make
+- Poetry
 
 ## Installation
 Navigate to the releases page found [here](https://github.com/robert-clayton/scroller/releases) and download the latest release. Extract the contents of the `scroller-v*.zip` archive and run `scroller.exe` found within.
