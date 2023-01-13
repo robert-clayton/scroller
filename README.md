@@ -1,8 +1,4 @@
-<!-- center div -->
-
-<p align="center">
-    ![Scroller](/res/logo.png)
-</p>
+<p align="center"><img src=./res/logo.png></p>
 
 
 # Scroller
