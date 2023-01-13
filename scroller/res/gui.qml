@@ -69,28 +69,36 @@ ApplicationWindow {
 
         function addColumn(amt) {
             const previousWidth = window.colWidth
-            if (settings.colCount + amt < 1 || settings.colCount + amt > 10)
+            const newCount = settings.colCount + amt
+            if (newCount == 0 || newCount > 10)
                 return
+            
+            // Save the current positions of the columns
             for (var i = 0; i < repeater.count; i++)
                 colPositions[i] = repeater.itemAt(i).contentY
-            if (amt < 0)
-                ImageModel.removeProxy(settings.colCount - 1)
+
             settings.colCount += amt
+
+            // Resize the columns
             for (var i = 0; i < repeater.count; i++) {
                 const deltaWidth = window.colWidth / previousWidth
                 repeater.itemAt(i).contentY = colPositions[i] * deltaWidth
             }
-            if (amt < 0)
-                for (var i = 0; i < Object.keys(settings.colCount).length; i++)
-                    if (i > settings.colCount)
-                        delete colPositions[i]
+
+            // Remove any column positions that are no longer needed
+            for (var i = 0; i < Object.keys(settings.colCount).length; i++)
+                if (i > settings.colCount)
+                    delete colPositions[i]
         }
 
         FolderDialog { 
             id: folderDialog 
             onAccepted: {
                 settings.folder = folderDialog.folder
+                const curColCount = settings.colCount
+                settings.colCount = 0
                 ImageModel.startup(settings.folder)
+                settings.colCount = curColCount
             }
         }
         function changeFolder() {
@@ -166,6 +174,10 @@ ApplicationWindow {
                 onAtYEndChanged: {
                     if (model == null) return
                     if (view.atYEnd) model.generateImages(cacheBuffer) 
+                }
+
+                Component.onDestruction: {
+                    ImageModel.removeProxy(index)
                 }
 
                 Behavior on contentY { id: behaviorContentY; NumberAnimation{ duration: 100 } }
