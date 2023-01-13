@@ -2,6 +2,13 @@ name: Test (CI)
 
 on:
   push:
+    paths:
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - 'Makefile'
+      - 'src/**'
+      - 'tests/**'
+      - '.github/workflows/test.yml'
 
 defaults:
   run:
