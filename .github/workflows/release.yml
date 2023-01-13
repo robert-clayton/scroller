@@ -18,18 +18,6 @@ jobs:
     runs-on: windows-10
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Release Notes
-        id: notes
-        run: |
-          sed -i 's/<version>/${{ github.event.inputs.version }}/g' RELEASE.md
-          RELEASE=$(cat RELEASE.md)
-          RELEASE="${RELEASE//'%'/'%25'}"
-          RELEASE="${RELEASE//$'\n'/'%0A'}"
-          RELEASE="${RELEASE//$'\r'/'%0D'}"
-          echo "notes=$RELEASE" >> $GITHUB_OUTPUT
 
       - name: Compare Versions
         id: compare
@@ -42,6 +30,16 @@ jobs:
           else
             exit 1
           fi
+
+      - name: Release Notes
+        id: notes
+        run: |
+          sed -i 's/<version>/${{ github.event.inputs.version }}/g' RELEASE.md
+          RELEASE=$(cat RELEASE.md)
+          RELEASE="${RELEASE//'%'/'%25'}"
+          RELEASE="${RELEASE//$'\n'/'%0A'}"
+          RELEASE="${RELEASE//$'\r'/'%0D'}"
+          echo "notes=$RELEASE" >> $GITHUB_OUTPUT
 
       - name: Install Dependencies
         run: make install
@@ -70,6 +68,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ steps.release.outputs.upload_url }}
-          asset_path: ./scroller-${{ github.event.inputs.version }}.zip
-          asset_name: scroller-${{ github.event.inputs.version }}.zip
+          asset_path: ./scroller-${{ steps.compare.outputs.version }}.zip
+          asset_name: scroller-${{ steps.compare.outputs.version }}.zip
           asset_content_type: application/octet-stream
