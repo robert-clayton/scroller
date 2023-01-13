@@ -3,10 +3,14 @@ name: Test (CI)
 on:
   push:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test:
     name: Test
-    runs-on: windows-latest
+    runs-on: windows-10
     steps:
       - uses: actions/checkout@v3
 
