@@ -32,11 +32,14 @@ jobs:
           echo "::set-output name=notes::$RELEASE"
 
       - name: Compare Versions
+        id: compare
         run: |
           CUR_VERSION=$(poetry version | cut -d ' ' -f 2)
           PRE_VERSION=$(git describe --tags `git rev-list --tags --max-count=1` | cut -c 2-)
 
-          if [ "$CUR_VERSION" \<= "$PRE_VERSION" ]; then
+          if [ "$CUR_VERSION" \> "$PRE_VERSION" ]; then
+            echo "::set-output name=version::$CUR_VERSION"
+          else
             exit 1
           fi
 
@@ -47,7 +50,7 @@ jobs:
         run: make build
 
       - name: Zip Artifact
-        run: 7z a -tzip scroller-${{ github.event.inputs.version }}.zip dist/scroller
+        run: 7z a -tzip scroller-${{ github.steps.compare.outputs.version }}.zip dist/scroller
 
       - name: Create Release
         uses: actions/create-release@master
@@ -55,8 +58,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          tag_name: ${{ github.event.inputs.version }}
-          release_name: ${{ github.event.inputs.version }}
+          tag_name: v${{ github.steps.compare.outputs.version }}
+          release_name: v${{ github.steps.compare.outputs.version }}
           body: |
             ${{ steps.notes.outputs.notes }}
           prerelease: false
