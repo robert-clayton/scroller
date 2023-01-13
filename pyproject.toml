@@ -23,6 +23,8 @@ omit = [
     "signature_bootstrap.py",
 ]
 
+[tool.poetry.scripts]
+scroller = "scroller.main:main"
 
 [build-system]
 requires = ["poetry-core"]
