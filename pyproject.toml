@@ -1,26 +1,21 @@
 [tool.poetry]
 name = "scroller"
-version = "0.1.0"
+version = "0.1.4"
 description = ""
 authors = ["robert-clayton <41345902+robert-clayton@users.noreply.github.com>"]
 license = "MIT"
+readme = "README.md"
 
-[tool.pytest.ini_options]
-pythonpath = "scroller/"
+[tool.poetry.dependencies]
+python = ">=3.9, <3.12"
+pyside6 = "^6.4.2"
+pillow = "^9.4.0"
 
-# `shiboken6`, which creates the python bindings for `Qt` C++ source, imports from a
-# `zip` file into the top-level directory at runtime. These files are deleted after
-# running, but `coverage` attempts to look at their source after they're gone, causing
-# warnings to appear. Namely, it looks for these modules/files:
-#
-#    myproj/pysrcript
-#    myproj/shibokensupport
-#    myproj/signature_bootstrap.py
-#
-# To avoid this error, `source` is specified to the package subdirectory. However, this
-# can also be avoided by explicitly omitting these folders in the `omit` section.
-#
-# See https://github.com/nedbat/coveragepy/issues/1392
+[tool.poetry.group.dev.dependencies]
+pytest-qt = "^4.2.0"
+pytest = "^7.2.0"
+pytest-cov = "^4.0.0"
+
 [tool.coverage.report]
 omit = [
     "shibokensupport/*",
@@ -28,25 +23,7 @@ omit = [
     "signature_bootstrap.py",
 ]
 
-[tool.poetry.scripts]
-scroller = "scroller.main:main"
-
-[tool.poetry.dependencies]
-python = ">=3.9,<3.10"
-Pillow = "^8.3.2"
-PySide6 = "^6.4.2"
-
-[tool.poetry.dev-dependencies]
-isort = "^5.9.3"
-black = "^21.9b0"
-flake8 = "^3.9.2"
-mypy = "^0.910"
-bandit = "^1.7.0"
-pytest = "^6.2.5"
-pyinstaller = "^4.5.1"
-pytest-qt = "^4.2.0"
-pytest-cov = "^4.0.0"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
