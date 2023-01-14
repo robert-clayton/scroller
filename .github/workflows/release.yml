@@ -34,12 +34,8 @@ jobs:
       - name: Release Notes
         id: notes
         run: |
-          sed -i 's/<version>/${{ github.event.inputs.version }}/g' RELEASE.md
-          RELEASE=$(cat RELEASE.md)
-          RELEASE="${RELEASE//'%'/'%25'}"
-          RELEASE="${RELEASE//$'\n'/'%0A'}"
-          RELEASE="${RELEASE//$'\r'/'%0D'}"
-          echo "notes=$RELEASE" >> $GITHUB_OUTPUT
+          sed -i "s/<version>/${{ steps.compare.outputs.version }}/g" RELEASE.md
+          echo "notes=$(cat RELEASE.md)" >> $GITHUB_OUTPUT
 
       - name: Install Dependencies
         run: make install
