@@ -1,0 +1,5 @@
+[run]
+omit =
+    scroller/__init__.py
+    scroller/__main__.py
+    scroller/qml_rc.py

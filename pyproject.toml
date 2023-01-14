@@ -31,3 +31,6 @@ scroller = "scroller.main:main"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[pytest]
+addopts = "--ignore= --ignore=someotherdir"

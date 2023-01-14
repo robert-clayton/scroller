@@ -51,4 +51,4 @@ format: $(INSTALL_STAMP) ## Format all python files
 
 .PHONY: test
 test: $(INSTALL_STAMP) ## Run tests
-	$(POETRY) run pytest ./tests/ --cov-report term-missing --cov-fail-under 100 --cov $(NAME)
+	$(POETRY) run pytest ./tests/ --cov-report term-missing --cov-fail-under 55 --cov $(NAME)

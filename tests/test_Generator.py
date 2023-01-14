@@ -67,9 +67,37 @@ def test_error(qtbot, task_error):
     generator.signals.error.connect(error_callback)
     generator.signals.finished.connect(finished_callback)
 
-    QThreadPool.globalInstance().start(generator)
-    qtbot.waitUntil(lambda: error_emitted, timeout=200)
+    generator.run()
 
     assert not data_generated
     assert error_emitted
+    assert finished_emitted
+
+def test_run(qtbot, task_successful):
+    generator = Generator(task_successful, [], 1)
+    data_generated = False
+    error_emitted = False
+    finished_emitted = False
+
+    def data_generated_callback(data):
+        nonlocal data_generated
+        data_generated = True
+        assert data == [1, 2, 3]
+
+    def error_callback(error):
+        nonlocal error_emitted
+        error_emitted = True
+
+    def finished_callback():
+        nonlocal finished_emitted
+        finished_emitted = True
+
+    generator.signals.dataGenerated.connect(data_generated_callback)
+    generator.signals.error.connect(error_callback)
+    generator.signals.finished.connect(finished_callback)
+
+    generator.run()
+
+    assert data_generated
+    assert not error_emitted
     assert finished_emitted
