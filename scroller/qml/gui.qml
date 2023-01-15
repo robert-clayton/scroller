@@ -8,6 +8,7 @@ import QtCore 6.2
 import Qt5Compat.GraphicalEffects
 
 import 'qrc:/delegates'
+import 'qrc:/components'
 
 ApplicationWindow {
     id: window
@@ -18,11 +19,13 @@ ApplicationWindow {
     property bool paused: false
     property int colWidth: width / settings.colCount
 
+
     Component.onCompleted: {
         internal.ensureValidWindowPosition()
         title = qsTr("Scroller") + " | " + settings.folder
         ImageModel.startup(settings.folder)
     }
+
     Component.onDestruction: internal.saveScreenLayout()
 
     Connections {
@@ -93,7 +96,7 @@ ApplicationWindow {
 
         FolderDialog { 
             id: folderDialog 
-            onAccepted: {
+            onAccepted: { 
                 settings.folder = folderDialog.folder
                 const curColCount = settings.colCount
                 settings.colCount = 0
@@ -101,16 +104,10 @@ ApplicationWindow {
                 settings.colCount = curColCount
             }
         }
+
         function changeFolder() {
             folderDialog.folder = settings.folder
             folderDialog.open()
-        }
-
-        function openMenu(openingMenu) {
-            if (openingMenu)
-                menu.open()
-            window.paused = openingMenu
-            blur.visible = openingMenu
         }
 
         function toggleVisibility() {
@@ -122,7 +119,6 @@ ApplicationWindow {
         }
 
         Shortcut { sequence: StandardKey.Open; onActivated: internal.changeFolder() }
-        Shortcut { sequence: "Esc"; onActivated: internal.openMenu(true) }
         Shortcut { sequence: StandardKey.ZoomOut; onActivated: internal.addColumn(1) }
         Shortcut { sequence: StandardKey.ZoomIn; onActivated: internal.addColumn(-1) }
         Shortcut { sequence: "F10"; onActivated: () => { settings.flags ^= Qt.FramelessWindowHint} }
@@ -186,31 +182,62 @@ ApplicationWindow {
         }
     }
 
-    Popup {
-        id: menu
-        anchors.centerIn: parent
-        width: 300
-        height: 300
-        visible: false
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnEscape
 
-        onClosed: internal.openMenu(false)
+    MouseArea {
+        anchors.fill: parent
+        hoverEnabled: true
+        onPositionChanged: (mouse) => {
+            const lowEnough = mouse.y > 0.8 * window.height
+            const tooLow = mouse.y > window.height - 5
+            const tooLeft = mouse.x < bottomCenter.anchors.leftMargin
+            const tooRight = mouse.x > window.width - bottomCenter.anchors.rightMargin
+
+            if (lowEnough && !tooLow && !tooLeft && !tooRight) {
+                dockMenu.open()
+                bottomGradient.opacity = 1
+            } else {
+                dockMenu.close()
+                bottomGradient.opacity = 0
+            }
+        }
     }
 
-    ShaderEffectSource {
-        id: effectSource
-        sourceItem: container
-        anchors.fill: container
-        sourceRect: Qt.rect(x,y, width, height)
+    Item {
+        id: bottomCenter
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottomMargin: 30
+        anchors.leftMargin: 10
+        anchors.rightMargin: 10
+
+        DockMenu {
+            id: dockMenu
+            
+            buttons: [
+                { text: "Change Folder" }
+            ]
+            callbacks: {
+                "Change Folder": internal.changeFolder
+            }
+        }
     }
 
-    FastBlur {
-        id: blur
-        anchors.fill: effectSource
-        source: effectSource
-        radius: 25
-        visible: false
+    Rectangle {
+        id: bottomGradient
+        width: parent.width
+        height: bottomCenter.anchors.bottomMargin * 2
+        anchors.bottom: parent.bottom
+        opacity: 0
+        z: 100
+        
+        gradient: Gradient {
+            GradientStop { position: 1.0; color: Qt.rgba(0,0,0,1) }
+            GradientStop { position: 0.9; color: Qt.rgba(0,0,0,1) }
+            GradientStop { position: 0.4; color: Qt.rgba(0,0,0,.5) }
+            GradientStop { position: 0.1; color: "transparent"}
+        }
+
+        Behavior on opacity { id: behaviorOpacity; NumberAnimation{ duration: 300 } }
+
     }
 }

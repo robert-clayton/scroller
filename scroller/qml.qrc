@@ -6,4 +6,7 @@
     <file alias='ListDelegateImage.qml'>qml/delegates/ListDelegateImage.qml</file>
     <file alias='ListDelegateGif.qml'>qml/delegates/ListDelegateGif.qml</file>
   </qresource>
+  <qresource prefix="/components">
+    <file alias='DockMenu.qml'>qml/components/DockMenu.qml</file>
+  </qresource>
 </RCC>
