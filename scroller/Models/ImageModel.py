@@ -1,9 +1,9 @@
 from ctypes.wintypes import VARIANT_BOOL
 import random
-import importlib
 import os
-from PIL import Image
+import importlib
 from PySide6.QtCore import QAbstractListModel, QModelIndex, QSettings, QStandardPaths, Qt, QUrl, Slot
+from PySide6.QtGui import QPixmap
 from scroller.ManagedThreadPool import ManagedThreadPool
 from scroller.Generator import Generator
 
@@ -125,8 +125,8 @@ class ImageModel(QAbstractListModel):
                 continue
 
             try:
-                with Image.open(path) as img:
-                    ratio = img.size[0] / img.size[1]
+                pixmap = QPixmap(path)
+                ratio = pixmap.width() / pixmap.height()
             except PermissionError:  # file is not readable
                 continue
             data.append(

@@ -1,5 +1,5 @@
 from PySide6.QtCore import QSortFilterProxyModel, Slot
-from scroller.ImageModel import ImageModel
+from scroller.Models.ImageModel import ImageModel
 
 class ImageProxy(QSortFilterProxyModel):
     """
