@@ -1,6 +1,5 @@
 NAME := scroller
 INSTALL_STAMP := .install.stamp
-POETRY := $(shell command -v poetry 2> /dev/null)
 
 .DEFAULT_GOAL := help
 
@@ -11,25 +10,25 @@ help:
 .PHONY: install
 install: $(INSTALL_STAMP) ## Installs project dependencies via poetry
 $(INSTALL_STAMP): pyproject.toml poetry.lock
-	@if [ -z $(POETRY) ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
-	$(POETRY) install
+	@if [ -z poetry ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
+	poetry install
 	touch $(INSTALL_STAMP)
 
 .PHONY: generate
 generate: $(INSTALL_STAMP) ## Generates qrc file from .qml object files
-	@if [ -z $(POETRY) ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
+	@if [ -z poetry ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
 	@echo "Generating QRC"
 	@poetry run pyside6-rcc scroller/qml.qrc -o scroller/qml_rc.py
 
 .PHONY: build
 build: $(INSTALL_STAMP) generate ## Builds application package
-	@$(POETRY) run python -m PyInstaller bin/scroller.spec --noconfirm
+	@poetry run python -m PyInstaller bin/scroller.spec --noconfirm
 	@cat bin/unnecessary_build_files.txt | xargs rm -rf
 
 .PHONY: run
 run: $(INSTALL_STAMP) generate ## Runs the application
-	@if [ -z $(POETRY) ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
-	$(POETRY) run $(NAME)
+	@if [ -z poetry ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
+	poetry run $(NAME)
 
 .PHONY: clean
 clean: ## Cleanup all artifacts
@@ -38,17 +37,17 @@ clean: ## Cleanup all artifacts
 
 .PHONY: lint
 lint: $(INSTALL_STAMP) ## Lint all python files
-	$(POETRY) run isort --profile=black --lines-after-imports=2 --check-only ./tests/ $(NAME)
-	$(POETRY) run black --check ./tests/ $(NAME) --diff
-	$(POETRY) run flake8 --ignore=W503,E501 ./tests/ $(NAME)
-	$(POETRY) run mypy ./tests/ $(NAME) --ignore-missing-imports
-	$(POETRY) run bandit -r $(NAME) -s B608
+	poetry run isort --profile=black --lines-after-imports=2 --check-only ./tests/ $(NAME)
+	poetry run black --check ./tests/ $(NAME) --diff
+	poetry run flake8 --ignore=W503,E501 ./tests/ $(NAME)
+	poetry run mypy ./tests/ $(NAME) --ignore-missing-imports
+	poetry run bandit -r $(NAME) -s B608
 
 .PHONY: format
 format: $(INSTALL_STAMP) ## Format all python files
-	$(POETRY) run isort --profile=black --lines-after-imports=2 ./tests/ $(NAME)
-	$(POETRY) run black ./tests/ $(NAME)
+	poetry run isort --profile=black --lines-after-imports=2 ./tests/ $(NAME)
+	poetry run black ./tests/ $(NAME)
 
 .PHONY: test
 test: $(INSTALL_STAMP) ## Run tests
-	$(POETRY) run pytest ./tests/ --cov-report term-missing --cov-fail-under 55 --cov $(NAME)
+	poetry run pytest ./tests/ --cov-report term-missing --cov-fail-under 55 --cov $(NAME)

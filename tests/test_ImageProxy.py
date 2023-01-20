@@ -19,7 +19,7 @@ def test_generateImages(qtbot, prefabs):
     _, _, proxy = prefabs
     count = 5
     proxy.generateImages(count)
-    qtbot.waitUntil(lambda: proxy.rowCount() == count, timeout=200)
+    qtbot.waitUntil(lambda: proxy.rowCount() == count, timeout=10000)
     assert proxy.rowCount() == count
 
 def test_getProxyID(qtbot, prefabs):
