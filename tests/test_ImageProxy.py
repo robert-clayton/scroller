@@ -1,6 +1,6 @@
 import pytest
 from PySide6.QtCore import QUrl, QModelIndex
-from scroller.ImageModel import ImageModel
+from scroller.Models.ImageModel import ImageModel
 
 @pytest.fixture
 def prefabs():

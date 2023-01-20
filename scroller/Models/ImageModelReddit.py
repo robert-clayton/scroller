@@ -67,5 +67,3 @@ class RedditOAuth2(QObject):
         Called when the user has been authenticated.
         """
         self.isAuthenticated = success
-    
-    
