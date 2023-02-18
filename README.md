@@ -1,4 +1,4 @@
-<p align="center"><img src="https://i.ibb.co/RD4j25F/logo.png"></p>
+<p align="center"><img src="https://i.ibb.co/LN3Hgv2/logo.png" alt="logo" border="0"></p>
 
 # scroller
 [![Test (CI)](https://github.com/robert-clayton/scroller/actions/workflows/test.yml/badge.svg)](https://github.com/robert-clayton/scroller/actions/workflows/test.yml)
