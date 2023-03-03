@@ -19,11 +19,11 @@ $(INSTALL_STAMP): pyproject.toml poetry.lock
 generate: $(INSTALL_STAMP) ## Generates qrc file from .qml object files
 	@if [ -z $(POETRY) ]; then echo "Poetry could not be found. See https://python-poetry.org/docs/"; exit 2; fi
 	@echo "Generating QRC"
-	@poetry run pyside6-rcc scroller/qml.qrc -o scroller/qml_rc.py
+	@poetry run pyside6-rcc $(NAME)/qml.qrc -o $(NAME)/qml_rc.py
 
 .PHONY: build
 build: $(INSTALL_STAMP) generate ## Builds application package
-	@$(POETRY) run python -m PyInstaller bin/scroller.spec --noconfirm
+	@$(POETRY) run python -m PyInstaller bin/$(NAME).spec --noconfirm
 	@cat bin/unnecessary_build_files.txt | xargs rm -rf
 
 .PHONY: run
