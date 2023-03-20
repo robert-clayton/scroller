@@ -6,7 +6,7 @@ from PySide6.QtCore import QObject, QUrl, Slot, QtMsgType
 from PySide6.QtGui import QPixmap
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
-from scroller.Models.ImageModel import ImageModel
+from scroller.Models.ImageModelReddit import ImageModelReddit
 import scroller.qml_rc
 
 def qt_message_handler(mode, context, message):
@@ -76,7 +76,7 @@ def main():
     app.setApplicationVersion('dev')
 
     backend = Backend()
-    images = ImageModel()
+    images = ImageModelReddit()
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("ImageModel", images)
     engine.rootContext().setContextProperty("Backend", backend)
