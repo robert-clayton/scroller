@@ -1,9 +1,9 @@
 from ctypes.wintypes import VARIANT_BOOL
 import random
-import importlib
 import os
-from PIL import Image
+import importlib
 from PySide6.QtCore import QAbstractListModel, QModelIndex, QSettings, QStandardPaths, Qt, QUrl, Slot
+from PySide6.QtGui import QPixmap
 from scroller.ManagedThreadPool import ManagedThreadPool
 from scroller.Generator import Generator
 
@@ -87,8 +87,10 @@ class ImageModel(QAbstractListModel):
         self.imageData = []
         self.endRemoveRows()
 
+        # Retrieve the list of image files and sort by newest first
         self.imageList = [os.path.join(folder, file) for file in os.listdir(folder) if file.endswith((".jpg", ".jpeg", ".png", ".gif"))]
-        random.shuffle(self.imageList)
+        self.imageList.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+
         self.toGenerateList = self.imageList
 
         self.threadPool.cancelAll()
@@ -125,8 +127,8 @@ class ImageModel(QAbstractListModel):
                 continue
 
             try:
-                with Image.open(path) as img:
-                    ratio = img.size[0] / img.size[1]
+                pixmap = QPixmap(path)
+                ratio = pixmap.width() / pixmap.height()
             except PermissionError:  # file is not readable
                 continue
             data.append(
