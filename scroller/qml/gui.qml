@@ -34,7 +34,6 @@ ApplicationWindow {
             title = qsTr("Scroller") + " | " + settings.folder
         }
     }
-    
 
     Item {
         id: internal
@@ -106,8 +105,13 @@ ApplicationWindow {
         }
 
         function changeFolder() {
-            folderDialog.folder = settings.folder
-            folderDialog.open()
+            folderDialog.folder = settings.folder;
+            folderDialog.open();
+        }
+
+        function adjustOpacity(delta) {
+            window.opacity += delta;
+            window.opacity = Math.min(Math.max(window.opacity, 0.02), 1);
         }
 
         function toggleVisibility() {
@@ -118,6 +122,14 @@ ApplicationWindow {
             Backend.copyFile(url, settings.saveFolder)
         }
 
+        function openUrl(url) {
+            Backend.openFile(url)
+        }
+
+        function deleteUrl(url) {
+            Backend.deleteFile(url)
+        }
+
         Shortcut { sequence: StandardKey.Open; onActivated: internal.changeFolder() }
         Shortcut { sequence: StandardKey.ZoomOut; onActivated: internal.addColumn(1) }
         Shortcut { sequence: StandardKey.ZoomIn; onActivated: internal.addColumn(-1) }
@@ -126,16 +138,21 @@ ApplicationWindow {
         Shortcut { sequence: "Space"; onActivated: () => { window.paused = !window.paused } }
 
         MouseArea { 
+            id: hoverArea
             anchors.fill: parent
-            onWheel: (wheel) => {
-                if (wheel.modifiers & Qt.ControlModifier) {
-                    internal.addColumn(wheel.angleDelta.y > 0 ? -1 : 1)
-                } else if (wheel.modifiers & Qt.ShiftModifier) {
-                    window.opacity += wheel.angleDelta.y > 0 ? 0.02 : -0.02
-                    window.opacity = Math.min(Math.max(window.opacity, 0.02), 1)
+            hoverEnabled: true
+
+            property bool lowEnough: false
+
+            onPositionChanged: (mouse) => {
+                lowEnough = mouse.y > 0.8 * window.height
+
+                if (lowEnough) {
+                    dockMenu.open()
+                    bottomGradient.opacity = 1
                 } else {
-                    settings.tickSpeed += wheel.angleDelta.y > 0 ? 5 : -5
-                    settings.tickSpeed = Math.min(Math.max(settings.tickSpeed, 0), 100)
+                    dockMenu.close()
+                    bottomGradient.opacity = 0
                 }
             }
         }
@@ -153,7 +170,7 @@ ApplicationWindow {
                 Layout.fillHeight: true
                 Layout.fillWidth: true
                 model: ImageModel.requestProxy(index)
-                interactive: false
+                interactive: true
                 cacheBuffer: 10
                 delegate: 
                     Component {
@@ -182,26 +199,6 @@ ApplicationWindow {
         }
     }
 
-
-    MouseArea {
-        anchors.fill: parent
-        hoverEnabled: true
-        onPositionChanged: (mouse) => {
-            const lowEnough = mouse.y > 0.8 * window.height
-            const tooLow = mouse.y > window.height - 5
-            const tooLeft = mouse.x < bottomCenter.anchors.leftMargin
-            const tooRight = mouse.x > window.width - bottomCenter.anchors.rightMargin
-
-            if (lowEnough && !tooLow && !tooLeft && !tooRight) {
-                dockMenu.open()
-                bottomGradient.opacity = 1
-            } else {
-                dockMenu.close()
-                bottomGradient.opacity = 0
-            }
-        }
-    }
-
     Item {
         id: bottomCenter
         anchors.bottom: parent.bottom
@@ -212,12 +209,26 @@ ApplicationWindow {
 
         DockMenu {
             id: dockMenu
+            visible: hoverArea.lowEnough
             
             buttons: [
-                { text: "Change Folder" }
+                { text: "Change Folder"},
+                { text: "Add Column"},
+                { text: "Remove Column"},
+                { text: "Increase Opacity"},
+                { text: "Decrease Opacity"},
+                { text: "Increase Speed"},
+                { text: "Decrease Speed"}
             ]
+
             callbacks: {
-                "Change Folder": internal.changeFolder
+                "Change Folder": internal.changeFolder,
+                "Add Column": () => internal.addColumn(1),
+                "Remove Column": () => internal.addColumn(-1),
+                "Increase Opacity": () => internal.adjustOpacity(0.02),
+                "Decrease Opacity": () => internal.adjustOpacity(-0.02),
+                "Increase Speed": () => settings.tickSpeed += 5,
+                "Decrease Speed": () => settings.tickSpeed -= 5,
             }
         }
     }

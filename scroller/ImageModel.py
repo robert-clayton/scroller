@@ -2,10 +2,43 @@ from ctypes.wintypes import VARIANT_BOOL
 import random
 import os
 import importlib
-from PySide6.QtCore import QAbstractListModel, QModelIndex, QSettings, QStandardPaths, Qt, QUrl, Slot
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from PySide6.QtCore import QAbstractListModel, QModelIndex, QSettings, QStandardPaths, Qt, QUrl, Slot, QRunnable, QThreadPool
 from PySide6.QtGui import QPixmap
 from scroller.ManagedThreadPool import ManagedThreadPool
 from scroller.Generator import Generator
+
+class ImageDataWorker(QRunnable):
+    def __init__(self, path, proxyID):
+        super().__init__()
+        self.path = path
+        self.proxyID = proxyID
+        self.result = None
+
+    @Slot()
+    def run(self):
+        _, ext = os.path.splitext(self.path)
+        ext = ext.lower()
+        if ext in (".jpg", ".jpeg", ".png"):
+            type_ = "image"
+        elif ext == ".gif":
+            type_ = "gif"
+        else:
+            return 
+
+        try:
+            pixmap = QPixmap(self.path)
+            ratio = pixmap.width() / pixmap.height()
+            self.result = {
+                "url": QUrl.fromLocalFile(self.path),
+                "ratio": ratio,
+                "proxyID": self.proxyID,
+                "type": type_,
+            }
+        except PermissionError:
+            pass
+        except ZeroDivisionError:
+            print(f"Error reading image, div by zero: {self.path}")
 
 class ImageModel(QAbstractListModel):
     """
@@ -80,17 +113,43 @@ class ImageModel(QAbstractListModel):
 
     def setFolder(self, folder: QUrl):
         """
-        Set the folder containing the images to be displayed
+        Set the folder containing the images to be displayed, including images in sub-folders
         """
-        folder = folder.toLocalFile() if folder.toLocalFile() else folder.toString()
+        folderPath = folder.toLocalFile() if folder.toLocalFile() else folder.toString()
         self.beginRemoveRows(QModelIndex(), 0, self.rowCount() - 1)
         self.imageData = []
         self.endRemoveRows()
 
-        # Retrieve the list of image files and sort by newest first
-        self.imageList = [os.path.join(folder, file) for file in os.listdir(folder) if file.endswith((".jpg", ".jpeg", ".png", ".gif"))]
-        self.imageList.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+        def collect_images(directory):
+            image_paths = []
+            for file in os.listdir(directory):
+                if file.endswith((".jpg", ".jpeg", ".png", ".gif")):
+                    fullPath = os.path.join(directory, file)
+                    image_paths.append(fullPath)
+            return image_paths
+        
+        def get_file_info(file_path):
+            try:
+                return file_path, os.path.getmtime(file_path)
+            except OSError:
+                return file_path, 0
 
+        # Use ThreadPoolExecutor to walk the directory structure in parallel
+        with ThreadPoolExecutor() as executor:
+            future_to_directory = {executor.submit(collect_images, root): root for root, dirs, files in os.walk(folderPath)}
+            self.imageList = []
+            for future in as_completed(future_to_directory):
+                self.imageList.extend(future.result())
+        
+        # Retrieve file info in parallel
+        with ThreadPoolExecutor() as executor:
+            file_infos = list(executor.map(get_file_info, self.imageList))
+
+        # Sort based on modification time
+        file_infos.sort(key=lambda x: x[1], reverse=True)
+        self.imageList = [info[0] for info in file_infos]
+
+        # self.imageList.sort(key=lambda x: os.path.getmtime(x), reverse=True)
         self.toGenerateList = self.imageList
 
         self.threadPool.cancelAll()
@@ -112,33 +171,15 @@ class ImageModel(QAbstractListModel):
 
     @Slot(list, result=list)
     def generateImageData(self, generationList: list, proxyID: int):
-        """
-        Generate image data for the given list of image paths
-        """
-        data = []
-        for path in generationList:
-            _, ext = os.path.splitext(path)
-            ext = ext.lower()
-            if ext in (".jpg", ".jpeg", "png"):
-                type_ = "image"
-            elif ext == ".gif":
-                type_ = "gif"
-            else:
-                continue
+        threadPool = QThreadPool.globalInstance()
+        workers = [ImageDataWorker(path, proxyID) for path in generationList]
+        
+        for worker in workers:
+            threadPool.start(worker)
 
-            try:
-                pixmap = QPixmap(path)
-                ratio = pixmap.width() / pixmap.height()
-            except PermissionError:  # file is not readable
-                continue
-            data.append(
-                {
-                    "url": QUrl.fromLocalFile(path),
-                    "ratio": ratio,
-                    "proxyID": proxyID,
-                    "type": type_,
-                }
-            )
+        threadPool.waitForDone()
+
+        data = [worker.result for worker in workers if worker.result is not None]
         return data
 
     @Slot(result=bool)

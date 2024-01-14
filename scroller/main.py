@@ -60,6 +60,26 @@ class Backend(QObject):
             return True
         except PermissionError:
             return False
+    
+    @Slot(QUrl)
+    def deleteFile(self, url: QUrl):
+        if url.isLocalFile():
+            file_path = url.toLocalFile()
+        else:
+            file_path = urllib.parse.unquote(url.toString())
+
+        try:
+            os.remove(file_path)
+        except OSError as e:
+            print(f"Error: {e.strerror}. File: {file_path}")
+    
+    @Slot(QUrl)
+    def openFile(self, url: QUrl):
+        if url.isLocalFile():
+            file_path = url.toLocalFile()
+        else:
+            file_path = urllib.parse.unquote(url.toString())
+        os.startfile(file_path)
 
 def main():
     """
